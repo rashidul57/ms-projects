@@ -1,0 +1,13 @@
+[
+    {"text": "QUO", "position": {"left": "15px", "top": "12px"}, "fontSize": "20px", "color": "#2EE7D2"},
+    {"text": "CIRCA", "position": {"left": "62px", "top": "12px"}, "fontSize": "20px", "color": "#fff"},
+    {"text": "COVID-19:", "position": {"left": "15px", "top": "60px"}, "fontSize": "33px", "color": "#fff"},
+    {"text": "Accelerating", "position": {"left": "15px", "top": "95px"}, "fontSize": "30px", "color": "#fff"},
+    {"text": "Print Industry", "position": {"left": "15px", "top": "132px"}, "fontSize": "30px", "color": "#fff"},
+    {"text": "Transformation", "position": {"left": "15px", "top": "168px"}, "fontSize": "30px", "color": "#fff"},
+    {"text": "Quocirca Business", "position": {"left": "15px", "top": "230px"}, "fontSize": "20px", "color": "#2EE7D2"},
+    {"text": "Impact Tracker Study", "position": {"left": "15px", "top": "255px"}, "fontSize": "20px", "color": "#2EE7D2"},
+    {"text": "(Second Edition)", "position": {"left": "15px", "top": "280px"}, "fontSize": "20px", "color": "#2EE7D2"},
+    {"text": "DOWNLOAD", "position": {"left": "72px", "top": "486px"}, "fontSize": "11px", "color": "#000", "fontWeight": 600},
+    {"text": "Executive Summary Findings", "position": {"left": "22px", "top": "500px"}, "fontSize": "13px", "color": "#000", "fontWeight": 500}
+]

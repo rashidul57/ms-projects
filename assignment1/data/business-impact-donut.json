@@ -1,7 +1,45 @@
-[
-    {"name": "2%", "value": 2},
-    {"name": "15%", "value": 15},
-    {"name": "4%", "value": 4},
-    {"name": "66%", "value": 66},
-    {"name": "13%", "value": 13}
-]
+{
+    "title": "Impact of COVID-19",
+    "title2": "on business",
+    "values": [4, 66, 13, 2, 15],
+    "colors": ["#526662", "#2EE7D2", "#233535", "#ADBFBE", "#0A85D4"],
+    "label": {
+        "4": {"left": 0, "top": -40, "color": "#566563"},
+        "66": {"left": 5, "top": -5, "color": "#566563"},
+        "13": {"left": -35, "top": 10, "color": "#fff"},
+        "2": {"left": -58, "top": -25, "color": "#566563"},
+        "15": {"left": -28, "top": -10, "color": "#fff"}
+    },
+    "hints": {
+        "4": {
+            "left": 56,
+            "top": -60,
+            "key": "Critical impact",
+            "note": "business may have to close permanently"
+        },
+        "66": {
+            "left": 56,
+            "top": -30,
+            "key": "Significant impact",
+            "note": "critical threat to business that can be mitigated"
+        },
+        "13": {
+            "left": 56,
+            "top": 5,
+            "key": "Limited impact",
+            "note": "minimal threat to business"
+        },
+        "2": {
+            "left": 56,
+            "top": 35,
+            "key": "No impact",
+            "note": "no threat to business"
+        },
+        "15": {
+            "left": 56,
+            "top": 70,
+            "key": "Positive impact",
+            "note": "can be seen as an opportunity for business"
+        }
+    }
+}

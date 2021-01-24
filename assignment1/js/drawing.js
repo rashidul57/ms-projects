@@ -1,65 +1,104 @@
 
 async function draw_business_impact() {
-    const width = 100;
-    const height = 100;
     const data = await d3.json("./../data/business-impact-donut.json");
 
+    const title_svg = d3.select("#wrapper")
+        .append('svg')
+        .attr("width", 200)
+        .attr("height", 40)
+        .style("position", 'absolute')
+        .style("left", '250px')
+        .style("top", '15px')
+
+    title_svg.append('text')
+    .attr('font-size', '15px')
+    .style("font-weight", '400')
+    .attr('dx', 0)
+    .attr('dy', 20)  
+    .html(data.title);
+
+    title_svg.append('text')
+    .attr('font-size', '13px')
+    .style("font-weight", '400')
+    .attr('dx', 0)
+    .attr('dy', 36)  
+    .html(data.title2);
+
+    const width = 120,
+        height = 120,
+        radius = Math.min(width, height) / 2;
+
     const color = d3.scaleOrdinal()
-    .domain(data.map(d => d.name))
-    .range(d3.quantize(t => {
-        const c = d3.interpolateSpectral(t * 0.8 + 0.1);
-        // console.log(t, c)
-        return c;
-    }, data.length).reverse());
+        .range(data.colors);
 
     const arc = d3.arc()
-    .innerRadius(10)
-    .outerRadius(15);
+        .outerRadius(radius - 10)
+        .innerRadius(20);
 
-    arcLabel = () => {
-        const radius = Math.min(width, height) / 2 * 0.8;
-        return d3.arc().innerRadius(radius).outerRadius(radius);
-    }
+    const labelArc = d3.arc()
+        .outerRadius(radius - 55)
+        .innerRadius(radius - 40);
 
     const pie = d3.pie()
-    .sort(null)
-    .value(d => d.value);
+        .sort(null)
+        .value((d) => { return d; });
 
-    const arcs = pie(data);
-    const wrapper = d3.select("#wrapper")
-    const svg = wrapper.append("svg")
-      .attr("viewBox", [-width / 2, -height / 2, width, height]);
+    const svg = d3.select("#wrapper")
+        .append("svg")
+        .attr("width", 266)
+        .attr("height", 170)
+        .style("position", 'absolute')
+        .style("left", '250px')
+        .style("top", '70px')
+        .append("g")
+        .attr("transform", "translate(" + ((width / 2) + 10) + "," + ((height / 2) + 10)  + ")");
 
-  svg.append("g")
-      .attr("stroke", "white")
-    .selectAll("path")
-    .data(arcs)
-    .join("path")
-      .attr("fill", d => color(d.data.name))
+
+    const arc_g = svg.selectAll(".arc")
+    .data(pie(data.values))
+    .enter()
+    .append("g")
+    .attr("class", "arc");
+
+    arc_g.append("path")
       .attr("d", arc)
-    .append("title")
-      .text(d => `${d.data.name}: ${d.data.value.toLocaleString()}`);
+      .style("fill", (d) => { return color(d.data); });
 
-  svg.append("g")
-      .attr("font-family", "sans-serif")
-      .attr("font-size", '12px')
-      .attr("text-anchor", "middle")
-    .selectAll("text")
-    .data(arcs)
-    .join("text")
-      .attr("transform", d => `translate(${arcLabel().centroid(d)})`)
-      .call(text => text.append("tspan")
-          .attr("x", '0px')
-          .attr("y", "1px")
-          .attr("font-weight", "bold")
-          .text(d => d.data.name))
-      .call(text => text.filter(d => (d.endAngle - d.startAngle) > 0.25).append("tspan")
-          .attr("x", '0px')
-          .attr("y", "1px")
-          .attr("fill-opacity", 0.7)
-          .text(d => d.data.value.toLocaleString()));
+    arc_g.append("text")
+      .attr("transform", (d) => {return "translate(" + labelArc.centroid(d) + ")";})
+      .attr("dx", (d) => {return data.label[d.data].left + 'px';})
+      .attr("dy", (d) => {return data.label[d.data].top + 'px';})
+      .style("font-size", '16px')
+      .style("font-weight", 'bold')
+      .style("color", (d) => {return data.label[d.data].color;})
+      .text((d) => { return d.data + '%'; });
+    
+    const note_g = svg.selectAll(".hint")
+            .data(pie(data.values))
+            .enter()
+            .append("g")
+            .attr("class", "hint");
 
-    svg.node();
+    note_g.append('rect')
+        .attr("x", (d) => { return data.hints[d.data].left})
+        .attr('y', (d) => { return data.hints[d.data].top - 10})
+        .attr('width', 10)
+        .attr('height', 10)
+        .attr('fill', (d) => { return color(d.data);})
+        
+    note_g.append('text')
+        .attr("x", (d) => { return data.hints[d.data].left + 20})
+        .attr('y', (d) => { return data.hints[d.data].top - 1})
+        .style("font-size", '12px')
+        .style("font-weight", '600')
+        .text(d => {return data.hints[d.data].key})
+
+    note_g.append('text')
+        .attr("x", (d) => { return data.hints[d.data].left + 20})
+        .attr('y', (d) => { return data.hints[d.data].top + 10})
+        .style("font-size", '9px')
+        .text(d => {return data.hints[d.data].note})
+
 }
 
 async function add_plain_texts() {
@@ -77,7 +116,6 @@ async function add_plain_texts() {
         .style("font-weight", (d) => {return d.fontWeight || 'inherit'})
         .style("color", (d) => {return d.color})
         .html(d => d.text)
-        .node()
 }
 
 window.onload = () => {

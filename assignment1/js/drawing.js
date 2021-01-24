@@ -33,7 +33,7 @@ async function draw_business_impact() {
 
     const arc = d3.arc()
         .outerRadius(radius - 10)
-        .innerRadius(20);
+        .innerRadius(15);
 
     const labelArc = d3.arc()
         .outerRadius(radius - 55)
@@ -49,7 +49,7 @@ async function draw_business_impact() {
         .attr("height", 170)
         .style("position", 'absolute')
         .style("left", '250px')
-        .style("top", '70px')
+        .style("top", '60px')
         .append("g")
         .attr("transform", "translate(" + ((width / 2) + 10) + "," + ((height / 2) + 10)  + ")");
 
@@ -68,10 +68,21 @@ async function draw_business_impact() {
       .attr("transform", (d) => {return "translate(" + labelArc.centroid(d) + ")";})
       .attr("dx", (d) => {return data.label[d.data].left + 'px';})
       .attr("dy", (d) => {return data.label[d.data].top + 'px';})
-      .style("font-size", '16px')
+      .style("font-size", '14px')
       .style("font-weight", 'bold')
-      .style("color", (d) => {return data.label[d.data].color;})
-      .text((d) => { return d.data + '%'; });
+      .style("fill", (d) => {return data.label[d.data].color;})
+      .text((d) => { return d.data; });
+
+      arc_g.append("text")
+      .attr("transform", (d) => {return "translate(" + labelArc.centroid(d) + ")";})
+      .attr("dx", (d) => {
+          const buffer = d.data > 9 ? 17 : 8;
+          return (data.label[d.data].left + buffer) + 'px';
+      })
+      .attr("dy", (d) => {return data.label[d.data].top + 'px';})
+      .style("font-size", '12px')
+      .style("fill", (d) => {return data.label[d.data].color;})
+      .text((d) => { return '%'; });
     
     const note_g = svg.selectAll(".hint")
             .data(pie(data.values))
@@ -87,17 +98,23 @@ async function draw_business_impact() {
         .attr('fill', (d) => { return color(d.data);})
         
     note_g.append('text')
-        .attr("x", (d) => { return data.hints[d.data].left + 20})
+        .attr("x", (d) => { return data.hints[d.data].left + 15})
         .attr('y', (d) => { return data.hints[d.data].top - 1})
         .style("font-size", '12px')
-        .style("font-weight", '600')
+        .style("font-weight", '500')
         .text(d => {return data.hints[d.data].key})
 
     note_g.append('text')
-        .attr("x", (d) => { return data.hints[d.data].left + 20})
+        .attr("x", (d) => { return data.hints[d.data].left + 15})
         .attr('y', (d) => { return data.hints[d.data].top + 10})
         .style("font-size", '9px')
         .text(d => {return data.hints[d.data].note})
+
+        note_g.append('text')
+        .attr("x", (d) => { return data.hints[d.data].left + 15})
+        .attr('y', (d) => { return data.hints[d.data].top + 20})
+        .style("font-size", '9px')
+        .text(d => {return data.hints[d.data].note2 || ''})
 
 }
 

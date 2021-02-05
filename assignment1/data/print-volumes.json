@@ -1,0 +1,50 @@
+{
+    "text-rows": [
+        {"text": "Office print volumes", "fontSize": "15px", "fontWeight": "bold", "fontStyle": "normal", "top": "20px"},
+        {"text": "are in free fall", "fontSize": "15px", "fontWeight": "bold", "fontStyle": "normal", "top": "36px"},
+        {"text": "What impact are you seeing", "fontSize": "11px", "fontWeight": "500", "fontStyle": "italic", "top": "55px"},
+        {"text": "on custom print volumes?", "fontSize": "11px", "fontWeight": "500", "fontStyle": "italic", "top": "66px"}
+    ],
+    "percents": [
+        {
+            "perc": 68,
+            "left": 0,
+            "top": 105,
+            "fontSize": "30px",
+            "fontWeight": "bold",
+            "note1": "decline",
+            "note2": "Significant",
+            "color": "#2EE7D2"
+        },
+        {
+            "perc": 27,
+            "left": 0,
+            "top": 171,
+            "fontSize": "20px",
+            "fontWeight": "bold",
+            "note1": "Marginal decline",
+            "note2": "",
+            "color": "#098CE9"
+        },
+        {
+            "perc": 3,
+            "left": 14,
+            "top": 195,
+            "fontSize": "18px",
+            "fontWeight": "bold",
+            "note1": "No change",
+            "note2": "",
+            "color": "#575755"
+        },
+        {
+            "perc": 2,
+            "left": 14,
+            "top": 218,
+            "fontSize": "18px",
+            "fontWeight": "bold",
+            "note1": "Marginal increase",
+            "note2": "",
+            "color": "#575755"
+        }
+    ]
+}

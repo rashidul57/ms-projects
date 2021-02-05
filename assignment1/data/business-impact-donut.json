@@ -7,41 +7,41 @@
         "4": {"left": 0, "top": -40, "color": "#566563"},
         "66": {"left": 10, "top": -2, "color": "#566563"},
         "13": {"left": -33, "top": 3, "color": "#fff"},
-        "2": {"left": -54, "top": -25, "color": "#566563"},
+        "2": {"left": -49, "top": -22, "color": "#566563"},
         "15": {"left": -22, "top": -15, "color": "#fff"}
     },
     "hints": {
         "4": {
-            "left": 56,
-            "top": -60,
+            "left": 67,
+            "top": -65,
             "key": "Critical impact",
-            "note": "business may have to",
+            "note1": "business may have to",
             "note2": "close permanently"
         },
         "66": {
-            "left": 56,
-            "top": -20,
+            "left": 67,
+            "top": -27,
             "key": "Significant impact",
-            "note": "critical threat to business",
+            "note1": "critical threat to business",
             "note2": "that can be mitigated"
         },
         "13": {
-            "left": 56,
-            "top": 20,
+            "left": 67,
+            "top": 10,
             "key": "Limited impact",
-            "note": "minimal threat to business"
+            "note1": "minimal threat to business"
         },
         "2": {
-            "left": 56,
-            "top": 50,
+            "left": 67,
+            "top": 38,
             "key": "No impact",
-            "note": "no threat to business"
+            "note1": "no threat to business"
         },
         "15": {
-            "left": 56,
-            "top": 80,
+            "left": 67,
+            "top": 65,
             "key": "Positive impact",
-            "note": "can be seen as an",
+            "note1": "can be seen as an",
             "note2": "opportunity for business"
         }
     }

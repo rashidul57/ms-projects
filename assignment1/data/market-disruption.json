@@ -1,0 +1,29 @@
+{
+    "title": "Market disruption will",
+    "title2": "drive innovation",
+    "subTitle": "Agree or Strongly Agree responses",
+    "data": [84, 77, 66],
+    "rowTexts": {
+        "84": {
+            "text1": "COVID-19 has",
+            "text2": "caused significant",
+            "text3": "industry disruption",
+            "text4": "",
+            "text5": ""
+        },
+        "77": {
+            "text1": "COVID-19 presents",
+            "text2": "an opportunity",
+            "text3": "for innovation",
+            "text4": "",
+            "text5": ""
+        },
+        "66": {
+            "text1": "COVID-19 need",
+            "text2": "to change our",
+            "text3": "operating model",
+            "text4": "as a result of",
+            "text5": "COVID-19"
+        }
+    }
+}

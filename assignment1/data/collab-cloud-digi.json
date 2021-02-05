@@ -1,12 +1,12 @@
 {
     "titles": [
         {"text": "Collaboration, cloud and", "fontSize": 16, "fontWeight": "600", "fontStyle": "normal", "left": 0, "top": 20},
-        {"text": "digitization opportunities", "fontSize": 16, "fontWeight": "600", "fontStyle": "normal", "left": 0, "top": 35},
-        {"text": "Anticipated future interest", "fontSize": 11, "fontWeight": "500", "fontStyle": "italic", "left": 0, "top": 50}
+        {"text": "digitization opportunities", "fontSize": 16, "fontWeight": "600", "fontStyle": "normal", "left": 0, "top": 37},
+        {"text": "Anticipated future interest", "fontSize": 11, "fontWeight": "500", "fontStyle": "italic", "left": 0, "top": 54}
     ],
     "row_start": {
         "left": 0,
-        "top": 55
+        "top": 85
     },
     "opportunity_rows": [
         {"label1": "Collaboration services", "label2": "", "perc": 96, "color": "#2EE7D2"},

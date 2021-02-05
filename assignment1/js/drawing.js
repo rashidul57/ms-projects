@@ -8,13 +8,15 @@ async function add_left_bar_texts() {
         .data(data)
         .enter()
         .append('text')
+        .transition()
+        .duration(1000)
         .style("position", 'absolute')
         .style("left", function(d){ return d.position.left;})
         .style("top", function(d){ return d.position.top;})
         .style("font-size", (d) => {return d.fontSize})
         .style("font-weight", (d) => {return d.fontWeight || 'inherit'})
         .style("color", (d) => {return d.color})
-        .html(d => d.text)
+        .text(d => d.text)
 }
 
 async function draw_business_impact() {
@@ -31,19 +33,24 @@ async function draw_business_impact() {
         .style("left", '250px')
         .style("top", '15px')
 
-    title_svg.append('text')
+    title_svg
+    .append('text')
+    .transition()
+    .duration(1000)
     .attr('font-size', '15px')
     .style("font-weight", '400')
     .attr('dx', 0)
     .attr('dy', 20)  
-    .html(data.title);
+    .text(data.title);
 
     title_svg.append('text')
+    .transition()
+    .duration(1000)
     .attr('font-size', '13px')
     .style("font-weight", '400')
     .attr('dx', 0)
     .attr('dy', 36)  
-    .html(data.title2);
+    .text(data.title2);
 
     const width = 140,
         height = 140,
@@ -81,179 +88,75 @@ async function draw_business_impact() {
     .attr("class", "arc");
 
     arc_g.append("path")
-      .attr("d", arc)
-      .style("fill", (d) => { return color(d.data); });
+    .transition()
+    .duration(1000)
+    .attr("d", arc)
+    .style("fill", (d) => { return color(d.data); });
 
     arc_g.append("text")
-      .attr("transform", (d) => {return "translate(" + labelArc.centroid(d) + ")";})
-      .attr("dx", (d) => {return data.label[d.data].left + 'px';})
-      .attr("dy", (d) => {return data.label[d.data].top + 'px';})
-      .style("font-size", '15px')
-      .style("font-weight", 'bold')
-      .style("fill", (d) => {return data.label[d.data].color;})
-      .text((d) => { return d.data; });
+    .transition()
+    .duration(1000)
+    .attr("transform", (d) => {return "translate(" + labelArc.centroid(d) + ")";})
+    .attr("dx", (d) => {return data.label[d.data].left + 'px';})
+    .attr("dy", (d) => {return data.label[d.data].top + 'px';})
+    .style("font-size", '15px')
+    .style("font-weight", 'bold')
+    .style("fill", (d) => {return data.label[d.data].color;})
+    .text((d) => { return d.data; });
 
-      arc_g.append("text")
-      .attr("transform", (d) => {return "translate(" + labelArc.centroid(d) + ")";})
-      .attr("dx", (d) => {
-          const buffer = d.data > 9 ? 17 : 8;
-          return (data.label[d.data].left + buffer) + 'px';
-      })
-      .attr("dy", (d) => {return data.label[d.data].top + 'px';})
-      .style("font-size", '12px')
-      .style("fill", (d) => {return data.label[d.data].color;})
-      .text((d) => { return '%'; });
+    arc_g.append("text")
+    .transition()
+    .duration(1000)
+    .attr("transform", (d) => {return "translate(" + labelArc.centroid(d) + ")";})
+    .attr("dx", (d) => {
+        const buffer = d.data > 9 ? 17 : 8;
+        return (data.label[d.data].left + buffer) + 'px';
+    })
+    .attr("dy", (d) => {return data.label[d.data].top + 'px';})
+    .style("font-size", '12px')
+    .style("fill", (d) => {return data.label[d.data].color;})
+    .text((d) => { return '%'; });
     
     const note_g = svg.selectAll(".hint")
-            .data(pie(data.values))
-            .enter()
-            .append("g")
-            .attr("class", "hint");
-
-    note_g.append('rect')
-        .attr("x", (d) => { return data.hints[d.data].left})
-        .attr('y', (d) => { return data.hints[d.data].top - 10})
-        .attr('width', 10)
-        .attr('height', 10)
-        .attr('fill', (d) => { return color(d.data);});
-
-    note_g.append('text')
-        .attr("x", (d) => { return data.hints[d.data].left + 15})
-        .attr('y', (d) => { return data.hints[d.data].top - 3})
-        .style("font-size", '10px')
-        .style("font-weight", '500')
-        .text(d => {return data.hints[d.data].key})
-
-    note_g.append('text')
-        .attr("x", (d) => { return data.hints[d.data].left + 15})
-        .attr('y', (d) => { return data.hints[d.data].top + 7})
-        .style("font-size", '8px')
-        .text(d => {return data.hints[d.data].note1})
-
-        note_g.append('text')
-        .attr("x", (d) => { return data.hints[d.data].left + 15})
-        .attr('y', (d) => { return data.hints[d.data].top + 17})
-        .style("font-size", '8px')
-        .text(d => {return data.hints[d.data].note2 || ''})
-
-}
-
-async function draw_business_recovery() {
-    const data = await d3.json("./../data/business-recovery-pie.json");
-
-    const title_svg = d3.select("#wrapper")
-        .append('svg')
-        .attr("width", 200)
-        .attr("height", 40)
-        .style("position", 'absolute')
-        .style("left", '750px')
-        .style("top", '490px')
-
-    title_svg.append('text')
-    .attr('font-size', '15px')
-    .style("font-weight", '600')
-    .attr('dx', 0)
-    .attr('dy', 20)  
-    .html(data.title);
-
-    title_svg.append('text')
-    .attr('font-size', '15px')
-    .style("font-weight", '600')
-    .attr('dx', 0)
-    .attr('dy', 36)  
-    .html(data.title2);
-
-    const width = 140,
-        height = 140,
-        radius = Math.min(width, height) / 2;
-
-    const arc = d3.arc()
-        .outerRadius(radius - 10)
-        .innerRadius(0);
-
-    const labelArc = d3.arc()
-        .outerRadius(radius - 55)
-        .innerRadius(radius - 40);
-
-    const pie = d3.pie()
-        .sort(null)
-        .value((d) => { return d; });
-
-    const svg = d3.select("#wrapper")
-        .append("svg")
-        .attr("width", 266)
-        .attr("height", 170)
-        .style("position", 'absolute')
-        .style("left", '727px')
-        .style("top", '535px')
-        .append("g")
-        .attr("transform", "translate(" + ((width / 2) + 10) + "," + ((height / 2) + 10)  + ")");
-
-
-    const arc_g = svg.selectAll(".arc")
     .data(pie(data.values))
     .enter()
     .append("g")
-    .attr("class", "arc");
-
-    arc_g.append("path")
-      .attr("d", arc)
-      .style("fill", (d, i) => { return data.colors[i]; });
-
-    arc_g.append("text")
-      .attr("transform", (d) => {return "translate(" + labelArc.centroid(d) + ")";})
-      .attr("dx", (d, i) => {return get_item(d, i, 'label').left + 'px';})
-      .attr("dy", (d, i) => {return get_item(d, i, 'label').top + 'px';})
-      .style("font-size", '14px')
-      .style("font-weight", 'bold')
-      .style("fill", (d, i) => {
-          return get_item(d, i, 'label').color;
-      })
-      .text((d) => { return d.data; });
-
-      arc_g.append("text")
-      .attr("transform", (d) => {return "translate(" + labelArc.centroid(d) + ")";})
-      .attr("dx", (d, i) => {
-          const buffer = d.data > 9 ? 17 : 8;
-          return (get_item(d, i, 'label').left + buffer) + 'px';
-      })
-      .attr("dy", (d, i) => {return get_item(d, i, 'label').top + 'px';})
-      .style("font-size", '12px')
-      .style("fill", (d, i) => {return get_item(d, i, 'label').color;})
-      .text((d) => { return '%'; });
-    
-    const note_g = svg.selectAll(".hint")
-            .data(pie(data.values))
-            .enter()
-            .append("g")
-            .attr("class", "hint");
+    .attr("class", "hint");
 
     note_g.append('rect')
-        .attr("x", (d, i) => { return get_item(d, i, 'hints').left})
-        .attr('y', (d, i) => { return get_item(d, i, 'hints').top - 10})
-        .attr('width', 10)
-        .attr('height', 10)
-        .attr('fill', (d, i) => {return data.colors[i];});
+    .transition()
+    .duration(1000)
+    .attr("x", (d) => { return data.hints[d.data].left})
+    .attr('y', (d) => { return data.hints[d.data].top - 10})
+    .attr('width', 10)
+    .attr('height', 10)
+    .attr('fill', (d) => { return color(d.data);});
 
     note_g.append('text')
-        .attr("x", (d, i) => { return get_item(d, i, 'hints').left + 15})
-        .attr('y', (d, i) => { return get_item(d, i, 'hints').top - 2})
-        .style("font-size", '9px')
-        .text((d,i) => {return get_item(d, i, 'hints').note1})
+    .transition()
+    .duration(1000)
+    .attr("x", (d) => { return data.hints[d.data].left + 15})
+    .attr('y', (d) => { return data.hints[d.data].top - 3})
+    .style("font-size", '10px')
+    .style("font-weight", '500')
+    .text(d => {return data.hints[d.data].key})
 
     note_g.append('text')
-        .attr("x", (d, i) => { return get_item(d, i, 'hints').left + 15})
-        .attr('y', (d, i) => { return get_item(d, i, 'hints').top + 10})
-        .style("font-size", '9px')
-        .text((d, i) => {return get_item(d, i, 'hints').note2 || ''})
+    .transition()
+    .duration(1000)
+    .attr("x", (d) => { return data.hints[d.data].left + 15})
+    .attr('y', (d) => { return data.hints[d.data].top + 7})
+    .style("font-size", '8px')
+    .text(d => {return data.hints[d.data].note1})
 
-    function get_item(d, i, prop) {
-        let indx = d.data;
-        if (indx === 6) {
-            indx = i === 0 ? ('6-' + 1) : ('6-' + 2);
-        }
-        return data[prop][indx];
-      }
+    note_g.append('text')
+    .transition()
+    .duration(1000)
+    .attr("x", (d) => { return data.hints[d.data].left + 15})
+    .attr('y', (d) => { return data.hints[d.data].top + 17})
+    .style("font-size", '8px')
+    .text(d => {return data.hints[d.data].note2 || ''})
+
 }
 
 async function draw_market_disruption() {
@@ -267,26 +170,32 @@ async function draw_market_disruption() {
         .style("top", '15px');
 
         svg.append('text')
+        .transition()
+        .duration(1000)
         .attr('font-size', '16px')
         .style("font-weight", '500')
         .attr('dx', 0)
         .attr('dy', 20)  
-        .html(data.title);
+        .text(data.title);
 
         svg.append('text')
+        .transition()
+        .duration(1000)
         .attr('font-size', '16px')
         .style("font-weight", '500')
         .attr('dx', 0)
         .attr('dy', 38)  
-        .html(data.title2);
+        .text(data.title2);
 
         svg.append('text')
+        .transition()
+        .duration(1000)
         .attr('font-size', '11px')
         .style("font-weight", '400')
         .style("font-style", 'italic')
         .attr('dx', 0)
         .attr('dy', 55)  
-        .html(data.subTitle);
+        .text(data.subTitle);
 
     const row_g = svg.selectAll(".row")
         .data(data.data)
@@ -296,15 +205,19 @@ async function draw_market_disruption() {
     
     for (let k = 1; k <= 5; k++) {
         row_g.append('text')
-            .attr("dx", '0px')
-            .attr('dy', (d, index) => {return 65 + index * 45 + k * 11;})
-            .style("font-size", '8px')
-            .style("font-weight", '600')
-            .attr('fill', '#585757')
-            .text(d => {return data.rowTexts[d]['text' + k]});
+        .transition()
+        .duration(1000)
+        .attr("dx", '0px')
+        .attr('dy', (d, index) => {return 65 + index * 45 + k * 11;})
+        .style("font-size", '8px')
+        .style("font-weight", '600')
+        .attr('fill', '#585757')
+        .text(d => {return data.rowTexts[d]['text' + k]});
 
         if (k <= 2) {
             row_g.append("line")
+            .transition()
+            .duration(1000)
             .style("stroke", "#cbcdcd")
             .attr("x1", (d) => {return 0})
             .attr("y1", (d) => {return 108 + (k-1) * 43})
@@ -314,24 +227,30 @@ async function draw_market_disruption() {
     }
     
     row_g.append('text')
-        .attr("dx", '120px')
-        .attr('dy', (d, index) => {return 92 + index * 49})
-        .style("font-size", '30px')
-        .style("font-weight", 'bold')
-        .attr('fill', maxPercColor)
-        .text(d => d);
+    .transition()
+    .duration(1000)
+    .attr("dx", '120px')
+    .attr('dy', (d, index) => {return 92 + index * 49})
+    .style("font-size", '30px')
+    .style("font-weight", 'bold')
+    .attr('fill', maxPercColor)
+    .text(d => d);
     
     row_g.append('text')
-        .attr("dx", '152px')
-        .attr('dy', (d, index) => {return 92 + index * 49})
-        .style("font-size", '25px')
-        .style("font-weight", '100')
-        .attr('fill', maxPercColor)
-        .text('%');
+    .transition()
+    .duration(1000)
+    .attr("dx", '152px')
+    .attr('dy', (d, index) => {return 92 + index * 49})
+    .style("font-size", '25px')
+    .style("font-weight", '100')
+    .attr('fill', maxPercColor)
+    .text('%');
 
     var arc = d3.symbol().type(d3.symbolTriangle);
     row_g
     .append('path')
+    .transition()
+    .duration(1000)
     .attr('d', arc)
     .attr('fill', maxPercColor)
     .attr('stroke', maxPercColor)
@@ -352,15 +271,19 @@ async function draw_print_volumes() {
         .style("top", '10px');
 
     const textRows = data["text-rows"];
-    for (let k = 0; k < textRows.length; k++) {
-        svg.append('text')
-        .attr('font-size', textRows[k].fontSize)
-        .style("font-weight", textRows[k].fontWeight)
-        .style("font-style", textRows[k].fontStyle)
-        .attr('dx', textRows[k].left)
-        .attr('dy', textRows[k].top)
-        .html(textRows[k].text);
-    }
+    const title_g = svg.append("g");
+    title_g.selectAll("text")
+    .data(textRows)
+    .enter()
+    .append("text")
+    .transition()
+    .duration(1000)
+    .attr('font-size', (d, k) => { return textRows[k].fontSize;})
+    .style("font-weight", (d, k) => { return textRows[k].fontWeight;})
+    .style("font-style", (d, k) => { return textRows[k].fontStyle;})
+    .attr('dx', (d, k) => { return textRows[k].left;})
+    .attr('dy', (d, k) => { return textRows[k].top;})
+    .text((d, k) => { return textRows[k].text;});
 
     let sx = 170, sy = 63;
     const x_inc1 = 25, y_inc1 = 14, x_inc2 = 57, y_inc2 = -3;
@@ -375,6 +298,9 @@ async function draw_print_volumes() {
     .data([poly])
     .enter()
     .append("polygon")
+    .transition()
+    .duration(1000)
+    .ease(d3.easePolyInOut)
     .style("stroke", "#2EE7D2")
     .style("fill", "#2EE7D2")
     .attr("points", (d) => { 
@@ -395,25 +321,32 @@ async function draw_print_volumes() {
         }
         
         svg.append("line")
-            .style("stroke", color)
-            .attr("stroke-width", 1.5)
-            .attr("x1", sx)
-            .attr("y1", sy)
-            .attr("x2", sx+x_inc1)
-            .attr("y2", sy+y_inc1);
+        .transition()
+        .duration(1000)
+        .style("stroke", color)
+        .attr("stroke-width", 1.5)
+        .attr("x1", sx)
+        .attr("y1", sy)
+        .attr("x2", sx+x_inc1)
+        .attr("y2", sy+y_inc1);
+
         svg.append("line")
-            .style("stroke", color)
-            .attr("stroke-width", 1.5)
-            .attr("x1", sx+x_inc1)
-            .attr("y1", sy+y_inc1)
-            .attr("x2", sx+x_inc2)
-            .attr("y2", sy-y_inc2-6);
+        .transition()
+        .duration(1000)
+        .style("stroke", color)
+        .attr("stroke-width", 1.5)
+        .attr("x1", sx+x_inc1)
+        .attr("y1", sy+y_inc1)
+        .attr("x2", sx+x_inc2)
+        .attr("y2", sy-y_inc2-6);
         sy += 4.8;
     }
 
     // Top stains
     for (let k = 0; k < 6; k++) {
         svg.append("line")
+        .transition()
+        .duration(1000)
         .style("stroke", '#fff')
         .attr("stroke-width", 1.5)
         .attr("x1", rx+7 + k*4.5)
@@ -429,62 +362,74 @@ async function draw_print_volumes() {
         .attr("class", "vol-row");
     
     row_g.append('text')
-        .attr("dx", (d) => {return d.left})
-        .attr('dy', (d) => {return d.top})
-        .style("font-size", (d) => {return d.fontSize})
-        .style("font-weight", (d) => {return d.fontWeight})
-        .attr('fill', (d) => {return d.color})
-        .text(d => {return d.perc;});
+    .transition()
+    .duration(1000)
+    .attr("dx", (d) => {return d.left})
+    .attr('dy', (d) => {return d.top})
+    .style("font-size", (d) => {return d.fontSize})
+    .style("font-weight", (d) => {return d.fontWeight})
+    .attr('fill', (d) => {return d.color})
+    .text(d => {return d.perc;});
     
     row_g.append('text')
-        .attr("dx", (d, i) => {
-            const buf_left = i === 0 ? 33 : (i === 1) ? 23 : 11;
-            return d.left + buf_left;
-        })
-        .attr('dy', (d) => {return d.top})
-        .style("font-size", (d) => {return d.fontSize})
-        .style("font-weight", '100')
-        .attr('fill', (d) => {return d.color})
-        .text(d => '%');
+    .transition()
+    .duration(1000)
+    .attr("dx", (d, i) => {
+        const buf_left = i === 0 ? 33 : (i === 1) ? 23 : 11;
+        return d.left + buf_left;
+    })
+    .attr('dy', (d) => {return d.top})
+    .style("font-size", (d) => {return d.fontSize})
+    .style("font-weight", '100')
+    .attr('fill', (d) => {return d.color})
+    .text(d => '%');
 
     row_g.append('text')
-        .attr("dx", (d, i) => {
-            const buf_left = i === 0 ? 65 : (i === 1) ? 45 : 31;
-            return d.left + buf_left;
-        })
-        .attr('dy', (d) => {return d.top})
-        .style("font-size", 11)
-        .style("font-weight", '600')
-        .attr('fill', (d) => {return d.color})
-        .text(d => {return d.note1;});
+    .transition()
+    .duration(1000)
+    .attr("dx", (d, i) => {
+        const buf_left = i === 0 ? 65 : (i === 1) ? 45 : 31;
+        return d.left + buf_left;
+    })
+    .attr('dy', (d) => {return d.top})
+    .style("font-size", '11px')
+    .style("font-weight", '600')
+    .attr('fill', (d) => {return d.color})
+    .text(d => {return d.note1;});
 
     row_g.append('text')
-        .attr("dx", (d, i) => {
-            const buf_left = i === 0 ? 65 : (i === 1) ? 45 : 31;
-            return d.left + buf_left;
-        })
-        .attr('dy', (d) => {return d.top - 14})
-        .style("font-size", 11)
-        .style("font-weight", '600')
-        .attr('fill', (d) => {return d.color})
-        .text(d => {return d.note2;});
+    .transition()
+    .duration(1000)
+    .attr("dx", (d, i) => {
+        const buf_left = i === 0 ? 65 : (i === 1) ? 45 : 31;
+        return d.left + buf_left;
+    })
+    .attr('dy', (d) => {return d.top - 14})
+    .style("font-size", '11px')
+    .style("font-weight", '600')
+    .attr('fill', (d) => {return d.color})
+    .text(d => {return d.note2;});
 
     svg.append("line")
-        .style("stroke", "#797E7C")
-        .attr("x1", 0)
-        .attr("y1", 115)
-        .attr("x2", 160)
-        .attr("y2", 115);
+    .transition()
+    .duration(1000)
+    .style("stroke", "#797E7C")
+    .attr("x1", 0)
+    .attr("y1", 115)
+    .attr("x2", 160)
+    .attr("y2", 115);
 
     var triangle = [
         {"x": 140, "y": 90},
         {"x": 157, "y": 90},
         {"x": 148, "y": 103}
     ];
-    svg.selectAll("polygon1")
+    svg.selectAll("polygon")
     .data([triangle])
     .enter()
     .append("polygon")
+    .transition()
+    .duration(1000)
     .style("stroke", "#2EE7D2")
     .style("fill", "#2EE7D2")
     .attr("points", (d) => { 
@@ -493,7 +438,6 @@ async function draw_print_volumes() {
         }).join(" ");
     });
 }
-
 
 async function draw_vertical_demand() {
     const data = await d3.json("./../data/vertical-demand.json");
@@ -508,16 +452,20 @@ async function draw_vertical_demand() {
     const titles = data["titles"];
     for (let k = 0; k < titles.length; k++) {
         svg.append('text')
+        .transition()
+        .duration(1000)
         .attr('font-size', titles[k].fontSize)
         .style("font-weight", titles[k].fontWeight)
         .style("font-style", titles[k].fontStyle)
         .attr('dx', titles[k].left)
         .attr('dy', titles[k].top)
-        .html(titles[k].text);
+        .text(titles[k].text);
     }
 
     for (let k = 0; k < data.boxes.length; k++) {
         svg.append('rect')
+        .transition()
+        .duration(1000)
         .attr("x", data.boxes[k].left)
         .attr('y', data.boxes[k].top)
         .attr('width', 10)
@@ -525,6 +473,8 @@ async function draw_vertical_demand() {
         .attr('fill', data.boxes[k].color);
 
         svg.append('text')
+        .transition()
+        .duration(1000)
         .attr("x", data.boxes[k].left + 15)
         .attr('y', data.boxes[k].top + 8)
         .style("font-size", '9px')
@@ -639,7 +589,105 @@ async function draw_vertical_demand() {
     .text('%');
 }
 
-async function draw_channel_suppliers() {
+async function draw_collab_cloud_opp() {
+    const data = await d3.json("./../data/collab-cloud-digi.json");
+    const svg = d3.select("#wrapper")
+        .append("svg")
+        .attr("width", 475)
+        .attr("height", 230)
+        .style("position", 'absolute')
+        .style("left", '745px')
+        .style("top", '250px');
+
+    const titles = data["titles"];
+    for (let k = 0; k < titles.length; k++) {
+        svg.append('text')
+        .transition()
+        .duration(1000)
+        .attr('font-size', titles[k].fontSize)
+        .style("font-weight", titles[k].fontWeight)
+        .style("font-style", titles[k].fontStyle)
+        .attr('dx', titles[k].left)
+        .attr('dy', titles[k].top)
+        .text(titles[k].text);
+    }
+
+    const row_g = svg.selectAll(".oppo-row")
+    .data(data.opportunity_rows)
+    .enter()
+    .append("g")
+    .attr("class", "oppo-row");
+
+    row_g.append('text')
+    .transition()
+    .duration(1000)
+    .attr("x", (d) => { return data.row_start.left;})
+    .attr('y', (d, i) => {
+        let pos_y = data.row_start.top + i*50;
+        if (!d.label2) {
+            pos_y += 5;
+        }
+        return pos_y;
+    })
+    .style("font-size", '10px')
+    .style("font-weight", '600')
+    .text(d => {return d.label1});
+
+    row_g.append('text')
+    .transition()
+    .duration(1000)
+    .attr("x", (d) => { return data.row_start.left;})
+    .attr('y', (d, i) => {return data.row_start.top + i*50 + 12;})
+    .style("font-size", '10px')
+    .style("font-weight", '600')
+    .text(d => {return d.label2});
+
+    row_g.append('text')
+    .transition()
+    .duration(1000)
+    .attr("x", (d) => { return data.row_start.left + 150;})
+    .attr('y', (d, i) => {return data.row_start.top + i*50 + 15;})
+    .style("font-size", '30px')
+    .style("font-weight", '600')
+    .attr('fill', (d) => { return d.color;})
+    .text(d => {return d.perc});
+
+    row_g.append('text')
+    .transition()
+    .duration(1000)
+    .attr("x", (d) => { return data.row_start.left + 182;})
+    .attr('y', (d, i) => {return data.row_start.top + i*50 + 15;})
+    .style("font-size", '30px')
+    .style("font-weight", '100')
+    .attr('fill', (d) => { return d.color;})
+    .text('%');
+
+    row_g.append("line")
+    .transition()
+    .duration(1000)
+    .style("stroke", (d, i) => {
+        return i < data.opportunity_rows.length - 1 ? '#B2BEBD' : '';
+    })
+    .attr("x1", (d) => { return data.row_start.left;})
+    .attr("y1", (d, i) => { return data.row_start.top + 30 + i*50;})
+    .attr("x2", (d) => { return data.row_start.left + 240;})
+    .attr("y2", (d, i) => { return data.row_start.top + 30 + i*50;});
+
+    var arc = d3.symbol().type(d3.symbolTriangle);
+    row_g
+    .append('path')
+    .transition()
+    .duration(1000)
+    .attr('d', arc)
+    .attr('fill', maxPercColor)
+    .attr('stroke', maxPercColor)
+    .attr('stroke-width', 3)
+    .attr('transform', (d, index) => {
+        return "translate(" + 225 + "," + (92 + index * 52) + ")";
+    });
+}
+
+async function draw_channel_partners() {
     const data = await d3.json("./../data/channel-partners.json");
     const svg = d3.select("#wrapper")
         .append("svg")
@@ -740,14 +788,153 @@ async function draw_channel_suppliers() {
     .attr('fill', (d) => { return d.color;});
 }
 
+async function draw_business_recovery() {
+    const data = await d3.json("./../data/business-recovery-pie.json");
 
+    const title_svg = d3.select("#wrapper")
+        .append('svg')
+        .attr("width", 200)
+        .attr("height", 40)
+        .style("position", 'absolute')
+        .style("left", '750px')
+        .style("top", '490px')
+
+    title_svg.append('text')
+    .transition()
+    .duration(1000)
+    .attr('font-size', '15px')
+    .style("font-weight", '600')
+    .attr('dx', 0)
+    .attr('dy', 20)  
+    .text(data.title);
+
+    title_svg.append('text')
+    .transition()
+    .duration(1000)
+    .attr('font-size', '15px')
+    .style("font-weight", '600')
+    .attr('dx', 0)
+    .attr('dy', 36)  
+    .text(data.title2);
+
+    const width = 140,
+        height = 140,
+        radius = Math.min(width, height) / 2;
+
+    const arc = d3.arc()
+        .outerRadius(radius - 10)
+        .innerRadius(0);
+
+    const labelArc = d3.arc()
+        .outerRadius(radius - 55)
+        .innerRadius(radius - 40);
+
+    const pie = d3.pie()
+        .sort(null)
+        .value((d) => { return d; });
+
+    const svg = d3.select("#wrapper")
+        .append("svg")
+        .attr("width", 266)
+        .attr("height", 170)
+        .style("position", 'absolute')
+        .style("left", '727px')
+        .style("top", '535px')
+        .append("g")
+        .attr("transform", "translate(" + ((width / 2) + 10) + "," + ((height / 2) + 10)  + ")");
+
+
+    const arc_g = svg.selectAll(".arc")
+    .data(pie(data.values))
+    .enter()
+    .append("g")
+    .attr("class", "arc");
+
+    arc_g.append("path")
+    .transition()
+    .duration(1000)
+    .attr("d", arc)
+    .style("fill", (d, i) => { return data.colors[i]; });
+
+    arc_g.append("text")
+    .transition()
+    .duration(1000)
+    .attr("transform", (d) => {return "translate(" + labelArc.centroid(d) + ")";})
+    .attr("dx", (d, i) => {return get_item(d, i, 'label').left + 'px';})
+    .attr("dy", (d, i) => {return get_item(d, i, 'label').top + 'px';})
+    .style("font-size", '14px')
+    .style("font-weight", 'bold')
+    .style("fill", (d, i) => {
+        return get_item(d, i, 'label').color;
+    })
+    .text((d) => { return d.data; });
+
+    arc_g.append("text")
+    .transition()
+    .duration(1000)
+    .attr("transform", (d) => {return "translate(" + labelArc.centroid(d) + ")";})
+    .attr("dx", (d, i) => {
+        const buffer = d.data > 9 ? 17 : 8;
+        return (get_item(d, i, 'label').left + buffer) + 'px';
+    })
+    .attr("dy", (d, i) => {return get_item(d, i, 'label').top + 'px';})
+    .style("font-size", '12px')
+    .style("fill", (d, i) => {return get_item(d, i, 'label').color;})
+    .text((d) => { return '%'; });
+    
+    const note_g = svg.selectAll(".hint")
+            .data(pie(data.values))
+            .enter()
+            .append("g")
+            .attr("class", "hint");
+
+    note_g.append('rect')
+    .transition()
+    .duration(1000)
+    .attr("x", (d, i) => { return get_item(d, i, 'hints').left})
+    .attr('y', (d, i) => { return get_item(d, i, 'hints').top - 10})
+    .attr('width', 10)
+    .attr('height', 10)
+    .attr('fill', (d, i) => {return data.colors[i];});
+
+    note_g.append('text')
+    .transition()
+    .duration(1000)
+    .attr("x", (d, i) => { return get_item(d, i, 'hints').left + 15})
+    .attr('y', (d, i) => { return get_item(d, i, 'hints').top - 2})
+    .style("font-size", '9px')
+    .text((d,i) => {return get_item(d, i, 'hints').note1})
+
+    note_g.append('text')
+    .transition()
+    .duration(1000)
+    .attr("x", (d, i) => { return get_item(d, i, 'hints').left + 15})
+    .attr('y', (d, i) => { return get_item(d, i, 'hints').top + 10})
+    .style("font-size", '9px')
+    .text((d, i) => {return get_item(d, i, 'hints').note2 || ''})
+
+    function get_item(d, i, prop) {
+        let indx = d.data;
+        if (indx === 6) {
+            indx = i === 0 ? ('6-' + 1) : ('6-' + 2);
+        }
+        return data[prop][indx];
+      }
+}
 
 window.onload = () => {
     add_left_bar_texts();
+
     draw_business_impact();
     draw_market_disruption();
     draw_print_volumes();
-    draw_business_recovery();
+    
     draw_vertical_demand();
-    draw_channel_suppliers();
+    draw_collab_cloud_opp();
+
+    draw_channel_partners();
+    draw_business_recovery();
+    
+    
+    
 }

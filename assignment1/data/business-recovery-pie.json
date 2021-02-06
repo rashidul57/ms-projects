@@ -1,6 +1,8 @@
 {
-    "title": "Most are cautious about",
-    "title2": "business recovery time",
+    "titles": [
+        {"text": "Most are cautious about", "left": 0, "top": 20, "level": 1},
+        {"text": "business recovery time", "left": 0, "top": 36, "level": 1}
+    ],
     "values": [6, 15, 22, 35, 16, 6],
     "colors": ["#D6D6D6", "#575757", "#008BEA", "#2EE7D2", "#222222", "#B3B3B3"],
     "label": {

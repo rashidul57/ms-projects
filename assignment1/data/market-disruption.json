@@ -1,7 +1,9 @@
 {
-    "title": "Market disruption will",
-    "title2": "drive innovation",
-    "subTitle": "Agree or Strongly Agree responses",
+    "titles": [
+        {"text": "Market disruption will", "level": 1, "top": 20},
+        {"text": "drive innovation", "level": 1, "top": 38},
+        {"text": "Agree or Strongly Agree responses", "level": 2, "top": 55}
+    ],
     "data": [84, 77, 66],
     "rowTexts": {
         "84": {

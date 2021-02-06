@@ -1,6 +1,8 @@
 {
-    "title": "Impact of COVID-19",
-    "title2": "on business",
+    "titles": [
+        {"text": "Impact of COVID-19", "left": 0, "top": 20, "level": 1},
+        {"text": "on business", "left": 0, "top": 36, "level": 1}
+    ],
     "values": [4, 66, 13, 2, 15],
     "colors": ["#526662", "#2EE7D2", "#233535", "#ADBFBE", "#0A85D4"],
     "label": {

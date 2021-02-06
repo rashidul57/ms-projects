@@ -19,6 +19,18 @@ async function add_left_bar_texts() {
         .text(d => d.text)
 }
 
+function draw_title_el(svg, level, dx, dy, text) {
+    const cls = level === 1 ? 'section-title' : 'sub-title';
+    return svg
+    .append('text')
+    .transition()
+    .duration(1000)
+    .attr('class', cls)
+    .attr('dx', dx)
+    .attr('dy', dy)  
+    .text(text);
+}
+
 async function draw_business_impact() {
     const data = await d3.json("./../data/business-impact-donut.json");
     // reused all over the page
@@ -33,24 +45,10 @@ async function draw_business_impact() {
         .style("left", '250px')
         .style("top", '15px')
 
-    title_svg
-    .append('text')
-    .transition()
-    .duration(1000)
-    .attr('font-size', '15px')
-    .style("font-weight", '400')
-    .attr('dx', 0)
-    .attr('dy', 20)  
-    .text(data.title);
-
-    title_svg.append('text')
-    .transition()
-    .duration(1000)
-    .attr('font-size', '13px')
-    .style("font-weight", '400')
-    .attr('dx', 0)
-    .attr('dy', 36)  
-    .text(data.title2);
+    const titles = data["titles"];
+    for (let k = 0; k < titles.length; k++) {
+        draw_title_el(title_svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
+    }
 
     const width = 140,
         height = 140,
@@ -91,7 +89,16 @@ async function draw_business_impact() {
     .transition()
     .duration(1000)
     .attr("d", arc)
-    .style("fill", (d) => { return color(d.data); });
+    .attr("fill", (d) => { return color(d.data); });
+
+    arc_g.on('mousemove', function(ev, d) {
+        const color = data.colors[d.index];
+        d3.select(this).select('path').attr("fill", color + '80');
+    })
+    arc_g.on('mouseout', function(ev, d, i) {
+        const color = data.colors[d.index];
+        d3.select(this).select('path').attr("fill", color);
+    });
 
     arc_g.append("text")
     .transition()
@@ -169,33 +176,10 @@ async function draw_market_disruption() {
         .style("left", '525px')
         .style("top", '15px');
 
-        svg.append('text')
-        .transition()
-        .duration(1000)
-        .attr('font-size', '16px')
-        .style("font-weight", '500')
-        .attr('dx', 0)
-        .attr('dy', 20)  
-        .text(data.title);
-
-        svg.append('text')
-        .transition()
-        .duration(1000)
-        .attr('font-size', '16px')
-        .style("font-weight", '500')
-        .attr('dx', 0)
-        .attr('dy', 38)  
-        .text(data.title2);
-
-        svg.append('text')
-        .transition()
-        .duration(1000)
-        .attr('font-size', '11px')
-        .style("font-weight", '400')
-        .style("font-style", 'italic')
-        .attr('dx', 0)
-        .attr('dy', 55)  
-        .text(data.subTitle);
+    const titles = data["titles"];
+    for (let k = 0; k < titles.length; k++) {
+        draw_title_el(svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
+    }
 
     const row_g = svg.selectAll(".row")
         .data(data.data)
@@ -270,20 +254,11 @@ async function draw_print_volumes() {
         .style("left", '745px')
         .style("top", '10px');
 
-    const textRows = data["text-rows"];
+    const titles = data.titles;
     const title_g = svg.append("g");
-    title_g.selectAll("text")
-    .data(textRows)
-    .enter()
-    .append("text")
-    .transition()
-    .duration(1000)
-    .attr('font-size', (d, k) => { return textRows[k].fontSize;})
-    .style("font-weight", (d, k) => { return textRows[k].fontWeight;})
-    .style("font-style", (d, k) => { return textRows[k].fontStyle;})
-    .attr('dx', (d, k) => { return textRows[k].left;})
-    .attr('dy', (d, k) => { return textRows[k].top;})
-    .text((d, k) => { return textRows[k].text;});
+    for (let k = 0; k < titles.length; k++) {
+        draw_title_el(title_g, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
+    }
 
     let sx = 170, sy = 63;
     const x_inc1 = 25, y_inc1 = 14, x_inc2 = 57, y_inc2 = -3;
@@ -294,7 +269,8 @@ async function draw_print_volumes() {
         {"x": rx + x_inc2 - 2, "y": ry + y_inc2 + 2},
         {"x": rx + 31, "y": ry - 12}
     ];
-  svg.selectAll("polygon")
+
+    svg.selectAll("polygon")
     .data([poly])
     .enter()
     .append("polygon")
@@ -309,6 +285,7 @@ async function draw_print_volumes() {
         }).join(" ");
     });
 
+    // Draw piles of books
     const len = 32;
     for (let k = 0; k < len; k++) {
         const diff = len - k;
@@ -356,7 +333,7 @@ async function draw_print_volumes() {
     }
 
     const row_g = svg.selectAll(".vol-row")
-        .data(data.percents)
+        .data(data.percent_rows)
         .enter()
         .append("g")
         .attr("class", "vol-row");
@@ -424,7 +401,7 @@ async function draw_print_volumes() {
         {"x": 157, "y": 90},
         {"x": 148, "y": 103}
     ];
-    svg.selectAll("polygon")
+    svg.selectAll("rev-triangle")
     .data([triangle])
     .enter()
     .append("polygon")
@@ -451,15 +428,7 @@ async function draw_vertical_demand() {
 
     const titles = data["titles"];
     for (let k = 0; k < titles.length; k++) {
-        svg.append('text')
-        .transition()
-        .duration(1000)
-        .attr('font-size', titles[k].fontSize)
-        .style("font-weight", titles[k].fontWeight)
-        .style("font-style", titles[k].fontStyle)
-        .attr('dx', titles[k].left)
-        .attr('dy', titles[k].top)
-        .text(titles[k].text);
+        draw_title_el(svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
     }
 
     for (let k = 0; k < data.boxes.length; k++) {
@@ -527,6 +496,7 @@ async function draw_vertical_demand() {
     row_g.append('rect')
     .transition()
     .duration(1000)
+    .attr('class', 'left-bar')
     .attr("x", (d, i) => { return bar_middle + data.row_start.left + times*d.left_perc;})
     .attr('y', (d, i) => { return data.row_start.top + i*30 - 13;})
     .attr('width', (d, i) => { return Math.abs(times*d.left_perc);})
@@ -556,11 +526,19 @@ async function draw_vertical_demand() {
     row_g.append('rect')
     .transition()
     .duration(1000)
+    .attr('class', 'right-bar')
     .attr("x", (d, i) => { return bar_middle + data.row_start.left;})
     .attr('y', (d, i) => { return data.row_start.top + i*30 - 13;})
     .attr('width', (d, i) => { return Math.abs(times*d.right_perc);})
     .attr('height', 19)
     .attr('fill', (d) => { return d.colors[1];})
+
+    row_g.on('mousemove', function(ev, d) {
+        on_hover(ev, d, 'move', this);
+    })
+    row_g.on('mouseout', function(ev, d) {
+        on_hover(ev, d, 'out', this);
+    });
 
     row_g.append('text')
     .transition()
@@ -587,6 +565,23 @@ async function draw_vertical_demand() {
     .style("font-weight", '100')
     .attr('fill', (d) => { return d.colors[1];})
     .text('%');
+
+    function on_hover(ev, d, action, me) {
+        let selector;
+        if (ev.target.classList.contains('left-bar')) {
+            selector = 'left-bar';
+        }
+        if (ev.target.classList.contains('right-bar')) {
+            selector = 'right-bar';
+        }
+        if (selector) {
+            let color = selector === 'left-bar' ? d.colors[0] : d.colors[1];
+            if (action === 'move') {
+                color = color + '80';
+            }
+            d3.select(me).select('rect.' + selector).attr("fill", color);
+        }
+    }
 }
 
 async function draw_collab_cloud_opp() {
@@ -601,15 +596,7 @@ async function draw_collab_cloud_opp() {
 
     const titles = data["titles"];
     for (let k = 0; k < titles.length; k++) {
-        svg.append('text')
-        .transition()
-        .duration(1000)
-        .attr('font-size', titles[k].fontSize)
-        .style("font-weight", titles[k].fontWeight)
-        .style("font-style", titles[k].fontStyle)
-        .attr('dx', titles[k].left)
-        .attr('dy', titles[k].top)
-        .text(titles[k].text);
+        draw_title_el(svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
     }
 
     const row_g = svg.selectAll(".oppo-row")
@@ -699,15 +686,7 @@ async function draw_channel_partners() {
 
     const titles = data["titles"];
     for (let k = 0; k < titles.length; k++) {
-        svg.append('text')
-        .transition()
-        .duration(1000)
-        .attr('font-size', titles[k].fontSize)
-        .style("font-weight", titles[k].fontWeight)
-        .style("font-style", titles[k].fontStyle)
-        .attr('dx', titles[k].left)
-        .attr('dy', titles[k].top)
-        .text(titles[k].text);
+        draw_title_el(svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
     }
 
     const row_g = svg.selectAll(".supplier-row")
@@ -749,7 +728,13 @@ async function draw_channel_partners() {
     .attr('y', (d, i) => { return data.row_start.top + i*30 - 8;})
     .attr('width', (d, i) => { return Math.abs(times*d.perc);})
     .attr('height', 19)
-    .attr('fill', (d) => { return d.color;})
+    .attr('fill', (d) => { return d.color;});
+    row_g.on('mousemove', function(ev, d) {
+        d3.select(this).select('rect').attr("fill", d.color + '80');
+    })
+    row_g.on('mouseout', function(ev, d) {
+        d3.select(this).select('rect').attr("fill", d.color);
+    });
 
     row_g.append('text')
     .transition()
@@ -799,23 +784,10 @@ async function draw_business_recovery() {
         .style("left", '750px')
         .style("top", '490px')
 
-    title_svg.append('text')
-    .transition()
-    .duration(1000)
-    .attr('font-size', '15px')
-    .style("font-weight", '600')
-    .attr('dx', 0)
-    .attr('dy', 20)  
-    .text(data.title);
-
-    title_svg.append('text')
-    .transition()
-    .duration(1000)
-    .attr('font-size', '15px')
-    .style("font-weight", '600')
-    .attr('dx', 0)
-    .attr('dy', 36)  
-    .text(data.title2);
+    const titles = data["titles"];
+    for (let k = 0; k < titles.length; k++) {
+        draw_title_el(title_svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
+    }
 
     const width = 140,
         height = 140,
@@ -843,7 +815,6 @@ async function draw_business_recovery() {
         .append("g")
         .attr("transform", "translate(" + ((width / 2) + 10) + "," + ((height / 2) + 10)  + ")");
 
-
     const arc_g = svg.selectAll(".arc")
     .data(pie(data.values))
     .enter()
@@ -854,7 +825,18 @@ async function draw_business_recovery() {
     .transition()
     .duration(1000)
     .attr("d", arc)
-    .style("fill", (d, i) => { return data.colors[i]; });
+    .attr("fill", (d, i) => {
+        return data.colors[i];
+    });
+
+    arc_g.on('mousemove', function(ev, d) {
+        const color = data.colors[d.index];
+        d3.select(this).select('path').attr("fill", color + '80');
+    })
+    arc_g.on('mouseout', function(ev, d, i) {
+        const color = data.colors[d.index];
+        d3.select(this).select('path').attr("fill", color);
+    });
 
     arc_g.append("text")
     .transition()
@@ -924,6 +906,10 @@ async function draw_business_recovery() {
 
 window.onload = () => {
     add_left_bar_texts();
+
+    // d3.select("#wrapper")
+    // .style('background', "url('../images/background.jpg') no-repeat")
+    // .style('background-size', 'contain')
 
     draw_business_impact();
     draw_market_disruption();

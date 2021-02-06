@@ -1,7 +1,7 @@
 {
     "titles": [
-        {"text": "Channel partners expect more support", "fontSize": 16, "fontWeight": "600", "fontStyle": "normal", "left": 0, "top": 20},
-        {"text": "from their suppliers", "fontSize": 16, "fontWeight": "600", "fontStyle": "normal", "left": 0, "top": 35}
+        {"text": "Channel partners expect more support", "level": 1, "left": 0, "top": 20},
+        {"text": "from their suppliers", "level": 1, "left": 0, "top": 37}
     ],
     "row_start": {
         "left": 0,

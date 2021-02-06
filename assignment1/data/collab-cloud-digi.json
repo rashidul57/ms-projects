@@ -1,8 +1,8 @@
 {
     "titles": [
-        {"text": "Collaboration, cloud and", "fontSize": 16, "fontWeight": "600", "fontStyle": "normal", "left": 0, "top": 20},
-        {"text": "digitization opportunities", "fontSize": 16, "fontWeight": "600", "fontStyle": "normal", "left": 0, "top": 37},
-        {"text": "Anticipated future interest", "fontSize": 11, "fontWeight": "500", "fontStyle": "italic", "left": 0, "top": 54}
+        {"text": "Collaboration, cloud and", "level": 1, "left": 0, "top": 20},
+        {"text": "digitization opportunities", "level": 1, "left": 0, "top": 37},
+        {"text": "Anticipated future interest", "level": 2, "left": 0, "top": 54}
     ],
     "row_start": {
         "left": 0,

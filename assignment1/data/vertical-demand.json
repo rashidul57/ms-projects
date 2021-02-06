@@ -1,7 +1,7 @@
 {
     "titles": [
-        {"text": "Vertical demand varies", "fontSize": 16, "fontWeight": "600", "fontStyle": "normal", "left": 0, "top": 20},
-        {"text": "How is demand changing by industry sector?", "fontSize": 11, "fontWeight": "100", "fontStyle": "italic", "left": 0, "top": 35}
+        {"text": "Vertical demand varies", "fontSize": 16, "level": 1, "left": 0, "top": 20},
+        {"text": "How is demand changing by industry sector?", "fontSize": 11, "level": 2, "left": 0, "top": 35}
     ],
     "boxes": [
         {"label": "Decrease", "color": "#008BEA", "left": 320, "top": 15},

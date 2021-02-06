@@ -1,11 +1,11 @@
 {
-    "text-rows": [
-        {"text": "Office print volumes", "fontSize": "15px", "fontWeight": "bold", "fontStyle": "normal", "top": "20px"},
-        {"text": "are in free fall", "fontSize": "15px", "fontWeight": "bold", "fontStyle": "normal", "top": "36px"},
-        {"text": "What impact are you seeing", "fontSize": "11px", "fontWeight": "500", "fontStyle": "italic", "top": "55px"},
-        {"text": "on custom print volumes?", "fontSize": "11px", "fontWeight": "500", "fontStyle": "italic", "top": "66px"}
+    "titles": [
+        {"text": "Office print volumes", "level": 1, "top": 20},
+        {"text": "are in free fall", "level": 1, "top": 36},
+        {"text": "What impact are you seeing", "level": 2, "top": 55},
+        {"text": "on custom print volumes?", "level": 2, "top": 66}
     ],
-    "percents": [
+    "percent_rows": [
         {
             "perc": 68,
             "left": 0,

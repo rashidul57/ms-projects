@@ -12,11 +12,11 @@
         "top": 64
     },
     "demand_rows": [
-        {"label": "Education", "left_perc": -60, "right_perc": 11, "colors": ["#008BEA", "#2EE7D2"]},
-        {"label": "Retail", "left_perc": -71, "right_perc": 9, "colors": ["#008BEA", "#2EE7D2"]},
-        {"label": "Business &", "left_perc": -63, "right_perc": 10, "colors": ["#008BEA", "#2EE7D2"], "label2": "Professional Services"},
-        {"label": "Financial Services", "left_perc": -49, "right_perc": 16, "colors": ["#008BEA", "#2EE7D2"]},
-        {"label": "Government", "left_perc": -29, "right_perc": 32, "colors": ["#008BEA", "#2EE7D2"]},
-        {"label": "Healthcare", "left_perc": -15, "right_perc": 54, "colors": ["#008BEA", "#2EE7D2"]}
+        {"label": "Education", "left_perc": -60, "right_perc": 11},
+        {"label": "Retail", "left_perc": -71, "right_perc": 9},
+        {"label": "Business &", "left_perc": -63, "right_perc": 10, "label2": "Professional Services"},
+        {"label": "Financial Services", "left_perc": -49, "right_perc": 16},
+        {"label": "Government", "left_perc": -29, "right_perc": 32},
+        {"label": "Healthcare", "left_perc": -15, "right_perc": 54}
     ]
 }

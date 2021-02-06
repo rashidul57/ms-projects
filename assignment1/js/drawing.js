@@ -4,19 +4,19 @@ async function add_left_bar_texts() {
     const data = await d3.json("./../data/left-bar-text.json");
     const wrapper = d3.select("#wrapper")
     wrapper
-        .selectAll("text")
-        .data(data)
-        .enter()
-        .append('text')
-        .transition()
-        .duration(1000)
-        .style("position", 'absolute')
-        .style("left", function(d){ return d.position.left;})
-        .style("top", function(d){ return d.position.top;})
-        .style("font-size", (d) => {return d.fontSize})
-        .style("font-weight", (d) => {return d.fontWeight || 'inherit'})
-        .style("color", (d) => {return d.color})
-        .text(d => d.text)
+    .selectAll("text")
+    .data(data)
+    .enter()
+    .append('text')
+    .transition()
+    .duration(1000)
+    .style("position", 'absolute')
+    .style("left", function(d){ return d.position.left;})
+    .style("top", function(d){ return d.position.top;})
+    .style("font-size", (d) => {return d.fontSize})
+    .style("font-weight", (d) => {return d.fontWeight || 'inherit'})
+    .style("color", (d) => {return d.color})
+    .text(d => d.text)
 }
 
 function draw_title_el(svg, level, dx, dy, text) {
@@ -144,8 +144,7 @@ async function draw_business_impact() {
     .duration(1000)
     .attr("x", (d) => { return data.hints[d.data].left + 15})
     .attr('y', (d) => { return data.hints[d.data].top - 3})
-    .style("font-size", '10px')
-    .style("font-weight", '500')
+    .attr('class', 'text-10-thick')
     .text(d => {return data.hints[d.data].key})
 
     note_g.append('text')
@@ -153,7 +152,7 @@ async function draw_business_impact() {
     .duration(1000)
     .attr("x", (d) => { return data.hints[d.data].left + 15})
     .attr('y', (d) => { return data.hints[d.data].top + 7})
-    .style("font-size", '8px')
+    .attr('class', 'text-8-thin')
     .text(d => {return data.hints[d.data].note1})
 
     note_g.append('text')
@@ -161,7 +160,7 @@ async function draw_business_impact() {
     .duration(1000)
     .attr("x", (d) => { return data.hints[d.data].left + 15})
     .attr('y', (d) => { return data.hints[d.data].top + 17})
-    .style("font-size", '8px')
+    .attr('class', 'text-8-thin')
     .text(d => {return data.hints[d.data].note2 || ''})
 
 }
@@ -193,9 +192,7 @@ async function draw_market_disruption() {
         .duration(1000)
         .attr("dx", '0px')
         .attr('dy', (d, index) => {return 65 + index * 45 + k * 11;})
-        .style("font-size", '8px')
-        .style("font-weight", '600')
-        .attr('fill', '#585757')
+        .attr('class', 'text-10-thick')
         .text(d => {return data.rowTexts[d]['text' + k]});
 
         if (k <= 2) {
@@ -277,8 +274,8 @@ async function draw_print_volumes() {
     .transition()
     .duration(1000)
     .ease(d3.easePolyInOut)
-    .style("stroke", "#2EE7D2")
-    .style("fill", "#2EE7D2")
+    .style("stroke", maxPercColor)
+    .style("fill", maxPercColor)
     .attr("points", (d) => { 
         return d.map((d) => {
             return [d.x, d.y].join(",");
@@ -294,7 +291,7 @@ async function draw_print_volumes() {
         } else if (diff > 2 && diff < 12) {
             color = '#008BE9';
         } else {
-            color = "#2EE7D2";
+            color = maxPercColor;
         }
         
         svg.append("line")
@@ -407,8 +404,8 @@ async function draw_print_volumes() {
     .append("polygon")
     .transition()
     .duration(1000)
-    .style("stroke", "#2EE7D2")
-    .style("fill", "#2EE7D2")
+    .style("stroke", maxPercColor)
+    .style("fill", maxPercColor)
     .attr("points", (d) => { 
         return d.map((d) => {
             return [d.x, d.y].join(",");
@@ -467,8 +464,7 @@ async function draw_vertical_demand() {
         }
         return _top;
     })
-    .style("font-size", '10px')
-    .style("font-weight", '500')
+    .attr('class', 'text-9-thick')
     .text(d => {return d.label})
 
     row_g.append('text')
@@ -476,8 +472,7 @@ async function draw_vertical_demand() {
     .duration(1000)
     .attr("x", (d) => { return data.row_start.left;})
     .attr('y', (d, i) => {return data.row_start.top + 6 + i*30;})
-    .style("font-size", '10px')
-    .style("font-weight", '500')
+    .attr('class', 'text-9-thick')
     .text(d => {return d.label2})
 
     row_g.append("line")
@@ -501,7 +496,7 @@ async function draw_vertical_demand() {
     .attr('y', (d, i) => { return data.row_start.top + i*30 - 13;})
     .attr('width', (d, i) => { return Math.abs(times*d.left_perc);})
     .attr('height', 19)
-    .attr('fill', (d) => { return d.colors[0];});
+    .attr('fill', secMaxPercColor);
 
     row_g.append('text')
     .transition()
@@ -510,7 +505,7 @@ async function draw_vertical_demand() {
     .attr('y', (d, i) => {return data.row_start.top + i*30 + 4;})
     .style("font-size", '20px')
     .style("font-weight", '600')
-    .attr('fill', (d) => { return d.colors[0];})
+    .attr('fill', secMaxPercColor)
     .text(d => {return d.left_perc})
 
     row_g.append('text')
@@ -520,7 +515,7 @@ async function draw_vertical_demand() {
     .attr('y', (d, i) => {return data.row_start.top + i*30 + 4;})
     .style("font-size", '20px')
     .style("font-weight", '100')
-    .attr('fill', (d) => { return d.colors[0];})
+    .attr('fill', secMaxPercColor)
     .text('%')
 
     row_g.append('rect')
@@ -531,7 +526,7 @@ async function draw_vertical_demand() {
     .attr('y', (d, i) => { return data.row_start.top + i*30 - 13;})
     .attr('width', (d, i) => { return Math.abs(times*d.right_perc);})
     .attr('height', 19)
-    .attr('fill', (d) => { return d.colors[1];})
+    .attr('fill', maxPercColor)
 
     row_g.on('mousemove', function(ev, d) {
         on_hover(ev, d, 'move', this);
@@ -547,7 +542,7 @@ async function draw_vertical_demand() {
     .attr('y', (d, i) => {return data.row_start.top + i*30 + 4;})
     .style("font-size", '20px')
     .style("font-weight", '600')
-    .attr('fill', (d) => { return d.colors[1];})
+    .attr('fill', maxPercColor)
     .text(d => {return '+' + d.right_perc})
 
     row_g.append('text')
@@ -563,7 +558,7 @@ async function draw_vertical_demand() {
     .attr('y', (d, i) => {return data.row_start.top + i*30 + 4;})
     .style("font-size", '20px')
     .style("font-weight", '100')
-    .attr('fill', (d) => { return d.colors[1];})
+    .attr('fill', maxPercColor)
     .text('%');
 
     function on_hover(ev, d, action, me) {
@@ -575,7 +570,7 @@ async function draw_vertical_demand() {
             selector = 'right-bar';
         }
         if (selector) {
-            let color = selector === 'left-bar' ? d.colors[0] : d.colors[1];
+            let color = selector === 'left-bar' ? secMaxPercColor : maxPercColor;
             if (action === 'move') {
                 color = color + '80';
             }
@@ -616,17 +611,15 @@ async function draw_collab_cloud_opp() {
         }
         return pos_y;
     })
-    .style("font-size", '10px')
-    .style("font-weight", '600')
+    .attr('class', 'text-10-thick')
     .text(d => {return d.label1});
 
     row_g.append('text')
     .transition()
     .duration(1000)
+    .attr('class', 'text-10-thick')
     .attr("x", (d) => { return data.row_start.left;})
     .attr('y', (d, i) => {return data.row_start.top + i*50 + 12;})
-    .style("font-size", '10px')
-    .style("font-weight", '600')
     .text(d => {return d.label2});
 
     row_g.append('text')
@@ -636,7 +629,7 @@ async function draw_collab_cloud_opp() {
     .attr('y', (d, i) => {return data.row_start.top + i*50 + 15;})
     .style("font-size", '30px')
     .style("font-weight", '600')
-    .attr('fill', (d) => { return d.color;})
+    .attr('fill', maxPercColor)
     .text(d => {return d.perc});
 
     row_g.append('text')
@@ -646,7 +639,7 @@ async function draw_collab_cloud_opp() {
     .attr('y', (d, i) => {return data.row_start.top + i*50 + 15;})
     .style("font-size", '30px')
     .style("font-weight", '100')
-    .attr('fill', (d) => { return d.color;})
+    .attr('fill', maxPercColor)
     .text('%');
 
     row_g.append("line")
@@ -706,8 +699,7 @@ async function draw_channel_partners() {
         }
         return pos_y;
     })
-    .style("font-size", '10px')
-    .style("font-weight", '600')
+    .attr('class', 'text-10-thick')
     .text(d => {return d.label1});
 
     row_g.append('text')
@@ -715,8 +707,7 @@ async function draw_channel_partners() {
     .duration(1000)
     .attr("x", (d) => { return data.row_start.left;})
     .attr('y', (d, i) => {return data.row_start.top + i*30 + 12;})
-    .style("font-size", '10px')
-    .style("font-weight", '600')
+    .attr('class', 'text-10-thick')
     .text(d => {return d.label2});
 
     const bar_start = 140;
@@ -728,12 +719,12 @@ async function draw_channel_partners() {
     .attr('y', (d, i) => { return data.row_start.top + i*30 - 8;})
     .attr('width', (d, i) => { return Math.abs(times*d.perc);})
     .attr('height', 19)
-    .attr('fill', (d) => { return d.color;});
+    .attr('fill', maxPercColor);
     row_g.on('mousemove', function(ev, d) {
-        d3.select(this).select('rect').attr("fill", d.color + '80');
+        d3.select(this).select('rect').attr("fill", maxPercColor + '80');
     })
     row_g.on('mouseout', function(ev, d) {
-        d3.select(this).select('rect').attr("fill", d.color);
+        d3.select(this).select('rect').attr("fill", maxPercColor);
     });
 
     row_g.append('text')
@@ -744,7 +735,7 @@ async function draw_channel_partners() {
     .style("font-size", '20px')
     .style("font-weight", '600')
     .text(d => {return d.perc})
-    .attr('fill', (d) => { return d.color;});
+    .attr('fill', maxPercColor);
 
     row_g.append('text')
     .transition()
@@ -754,7 +745,7 @@ async function draw_channel_partners() {
     .style("font-size", '20px')
     .style("font-weight", '100')
     .text('%')
-    .attr('fill', (d) => { return d.color;});
+    .attr('fill', maxPercColor);
 
     svg.selectAll(".percent")
     .data(data.percents)
@@ -767,8 +758,7 @@ async function draw_channel_partners() {
         return bar_start + times * d - len;
     })
     .attr('y', 200)
-    .style("font-size", '7px')
-    .style("font-weight", '100')
+    .attr('class', 'text-7-thin')
     .text(d => {return d + '%';})
     .attr('fill', (d) => { return d.color;});
 }
@@ -884,7 +874,7 @@ async function draw_business_recovery() {
     .duration(1000)
     .attr("x", (d, i) => { return get_item(d, i, 'hints').left + 15})
     .attr('y', (d, i) => { return get_item(d, i, 'hints').top - 2})
-    .style("font-size", '9px')
+    .attr('class', 'text-10-thin')
     .text((d,i) => {return get_item(d, i, 'hints').note1})
 
     note_g.append('text')
@@ -892,7 +882,7 @@ async function draw_business_recovery() {
     .duration(1000)
     .attr("x", (d, i) => { return get_item(d, i, 'hints').left + 15})
     .attr('y', (d, i) => { return get_item(d, i, 'hints').top + 10})
-    .style("font-size", '9px')
+    .attr('class', 'text-10-thin')
     .text((d, i) => {return get_item(d, i, 'hints').note2 || ''})
 
     function get_item(d, i, prop) {
@@ -906,10 +896,6 @@ async function draw_business_recovery() {
 
 window.onload = () => {
     add_left_bar_texts();
-
-    // d3.select("#wrapper")
-    // .style('background', "url('../images/background.jpg') no-repeat")
-    // .style('background-size', 'contain')
 
     draw_business_impact();
     draw_market_disruption();

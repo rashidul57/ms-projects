@@ -17,12 +17,48 @@ html, body{
 svg .section-title{
     font-size: 17px;
     font-weight: 600;
-    color: #565756;
+    fill: #565756;
 }
 
 svg .sub-title{
     font-size: 11px;
     font-weight: 100;
     font-style: italic;
-    color: #565756;
+    fill: #565756;
+}
+
+svg .text-10-thick{
+    font-size: 10px;
+    font-weight: 600;
+    fill: #60605F;
+}
+
+svg .text-9-thick{
+    font-size: 9px;
+    font-weight: 600;
+    fill: #60605F;
+}
+
+svg .text-10-thin{
+    font-size: 10px;
+    font-weight: 100;
+    fill: #60605F;
+}
+
+svg .text-9-thin{
+    font-size: 9px;
+    font-weight: 100;
+    fill: #60605F;
+}
+
+svg .text-8-thin{
+    font-size: 8px;
+    font-weight: 500;
+    fill: #60605F;
+}
+
+svg .text-7-thin{
+    font-size: 7px;
+    font-weight: 500;
+    fill: #60605F;
 }

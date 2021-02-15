@@ -1,0 +1,64 @@
+html, body{
+    height: 100%;
+    width: 100%;
+}
+
+#wrapper{
+    background: url('../images/background.jpg') no-repeat;
+    height: 800px;
+    width: 1000px;
+    background-size: contain;
+    margin: auto;
+    position: relative;
+    font-family: sans-serif;
+    font-weight: 100;
+}
+
+svg .section-title{
+    font-size: 17px;
+    font-weight: 600;
+    fill: #565756;
+}
+
+svg .sub-title{
+    font-size: 11px;
+    font-weight: 100;
+    font-style: italic;
+    fill: #565756;
+}
+
+svg .text-10-thick{
+    font-size: 10px;
+    font-weight: 600;
+    fill: #60605F;
+}
+
+svg .text-9-thick{
+    font-size: 9px;
+    font-weight: 600;
+    fill: #60605F;
+}
+
+svg .text-10-thin{
+    font-size: 10px;
+    font-weight: 100;
+    fill: #60605F;
+}
+
+svg .text-9-thin{
+    font-size: 9px;
+    font-weight: 100;
+    fill: #60605F;
+}
+
+svg .text-8-thin{
+    font-size: 8px;
+    font-weight: 500;
+    fill: #60605F;
+}
+
+svg .text-7-thin{
+    font-size: 7px;
+    font-weight: 500;
+    fill: #60605F;
+}

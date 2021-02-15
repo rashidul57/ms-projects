@@ -61,7 +61,6 @@ async function draw_business_impact() {
         .style("left", '250px')
         .style("top", '15px')
 
-    // draw titles text of the block
     const titles = data["titles"];
     for (let k = 0; k < titles.length; k++) {
         draw_title_el(title_svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
@@ -71,7 +70,6 @@ async function draw_business_impact() {
         height = 140,
         radius = Math.min(width, height) / 2;
 
-    // Draw pie chart in this block 
     const color = d3.scaleOrdinal()
         .range(data.colors);
 
@@ -109,7 +107,6 @@ async function draw_business_impact() {
     .attr("d", arc)
     .attr("fill", (d) => { return color(d.data); });
 
-    // add hover effect to show color change effect
     arc_g.on('mousemove', function(ev, d) {
         const color = data.colors[d.index];
         d3.select(this).select('path').attr("fill", color + '80');
@@ -119,7 +116,6 @@ async function draw_business_impact() {
         d3.select(this).select('path').attr("fill", color);
     });
 
-    // Add the percentage of the pie arc
     arc_g.append("text")
     .transition()
     .duration(1000)
@@ -131,7 +127,6 @@ async function draw_business_impact() {
     .style("fill", (d) => {return data.label[d.data].color;})
     .text((d) => { return d.data; });
 
-    // Add % inside the pie arc
     arc_g.append("text")
     .transition()
     .duration(1000)
@@ -145,7 +140,6 @@ async function draw_business_impact() {
     .style("fill", (d) => {return data.label[d.data].color;})
     .text((d) => { return '%'; });
     
-    // Draw list of hints with rectangular boxes
     const note_g = svg.selectAll(".hint")
     .data(pie(data.values))
     .enter()
@@ -161,7 +155,6 @@ async function draw_business_impact() {
     .attr('height', 10)
     .attr('fill', (d) => { return color(d.data);});
 
-    // bold text row of hints
     note_g.append('text')
     .transition()
     .duration(1000)
@@ -170,7 +163,6 @@ async function draw_business_impact() {
     .attr('class', 'text-10-thick')
     .text(d => {return data.hints[d.data].key})
 
-    // first row of hint note
     note_g.append('text')
     .transition()
     .duration(1000)
@@ -179,7 +171,6 @@ async function draw_business_impact() {
     .attr('class', 'text-8-thin')
     .text(d => {return data.hints[d.data].note1})
 
-    // second row of hint note
     note_g.append('text')
     .transition()
     .duration(1000)
@@ -204,13 +195,11 @@ async function draw_market_disruption() {
         .style("left", '525px')
         .style("top", '15px');
 
-    // Draw title text of the block
     const titles = data["titles"];
     for (let k = 0; k < titles.length; k++) {
         draw_title_el(svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
     }
 
-    // create a g element in svg to hold data from array
     const row_g = svg.selectAll(".row")
         .data(data.data)
         .enter()

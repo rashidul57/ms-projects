@@ -1,0 +1,50 @@
+{
+    "titles": [
+        {"text": "Office print volumes", "level": 1, "top": 20},
+        {"text": "are in free fall", "level": 1, "top": 36},
+        {"text": "What impact are you seeing", "level": 2, "top": 55},
+        {"text": "on custom print volumes?", "level": 2, "top": 66}
+    ],
+    "percent_rows": [
+        {
+            "perc": 68,
+            "left": 0,
+            "top": 105,
+            "fontSize": "30px",
+            "fontWeight": "bold",
+            "note1": "decline",
+            "note2": "Significant",
+            "color": "#2EE7D2"
+        },
+        {
+            "perc": 27,
+            "left": 0,
+            "top": 171,
+            "fontSize": "20px",
+            "fontWeight": "bold",
+            "note1": "Marginal decline",
+            "note2": "",
+            "color": "#098CE9"
+        },
+        {
+            "perc": 3,
+            "left": 14,
+            "top": 195,
+            "fontSize": "18px",
+            "fontWeight": "bold",
+            "note1": "No change",
+            "note2": "",
+            "color": "#575755"
+        },
+        {
+            "perc": 2,
+            "left": 14,
+            "top": 218,
+            "fontSize": "18px",
+            "fontWeight": "bold",
+            "note1": "Marginal increase",
+            "note2": "",
+            "color": "#575755"
+        }
+    ]
+}

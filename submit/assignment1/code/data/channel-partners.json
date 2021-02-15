@@ -1,0 +1,18 @@
+{
+    "titles": [
+        {"text": "Channel partners expect more support", "level": 1, "left": 0, "top": 20},
+        {"text": "from their suppliers", "level": 1, "left": 0, "top": 37}
+    ],
+    "row_start": {
+        "left": 0,
+        "top": 55
+    },
+    "supplier_rows": [
+        {"label1": "Extended payment", "label2": "terms", "perc": 63},
+        {"label1": "Financial support", "label2": "(eg: extended credit terms)", "perc": 61},
+        {"label1": "Advanced rebates", "label2": "", "perc": 47},
+        {"label1": "Updates on supply", "label2": "chain issues", "perc": 45},
+        {"label1": "Personalized guidance", "label2": "", "perc": 27}
+    ],
+    "percents": [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+}

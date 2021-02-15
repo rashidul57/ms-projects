@@ -471,6 +471,7 @@ async function draw_print_volumes() {
  */
 async function draw_vertical_demand() {
     const data = await d3.json("./../data/vertical-demand.json");
+    // create svg elements
     const svg = d3.select("#wrapper")
         .append("svg")
         .attr("width", 475)
@@ -827,7 +828,6 @@ async function draw_channel_partners() {
     .text(d => {return d.perc})
     .attr('fill', max_perc_color);
 
-    
     // add '%' of each row
     row_g.append('text')
     .transition()
@@ -878,19 +878,22 @@ async function draw_business_recovery() {
         draw_title_el(title_svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
     }
 
-    // configs of pie chart
+    // Configs of pie chart
     const width = 140,
         height = 140,
         radius = Math.min(width, height) / 2;
 
+    // Arc instance
     const arc = d3.arc()
         .outerRadius(radius - 10)
         .innerRadius(0);
 
+    // label inside arc instance
     const labelArc = d3.arc()
         .outerRadius(radius - 55)
         .innerRadius(radius - 40);
 
+    // Pie instance with sorted data
     const pie = d3.pie()
         .sort(null)
         .value((d) => { return d; });
@@ -932,7 +935,7 @@ async function draw_business_recovery() {
         d3.select(this).select('path').attr("fill", color);
     });
 
-    // 
+    // Draw percentages(number)
     arc_g.append("text")
     .transition()
     .duration(1000)
@@ -946,6 +949,7 @@ async function draw_business_recovery() {
     })
     .text((d) => { return d.data; });
 
+    // Add '%' text for each row
     arc_g.append("text")
     .transition()
     .duration(1000)
@@ -959,6 +963,7 @@ async function draw_business_recovery() {
     .style("fill", (d, i) => {return get_item(d, i, 'label').color;})
     .text((d) => { return '%'; });
     
+    // Create g element for each hints
     const note_g = svg.selectAll(".hint")
             .data(pie(data.values))
             .enter()

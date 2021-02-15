@@ -152,6 +152,7 @@ async function draw_business_impact() {
     .append("g")
     .attr("class", "hint");
 
+    // Draw rectangular boxes
     note_g.append('rect')
     .transition()
     .duration(1000)
@@ -210,7 +211,7 @@ async function draw_market_disruption() {
         draw_title_el(svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
     }
 
-    // create a g element in svg to hold data from array
+    // Create a g element in svg to hold data from array
     const row_g = svg.selectAll(".row")
         .data(data.data)
         .enter()
@@ -218,6 +219,7 @@ async function draw_market_disruption() {
         .attr("class", "row");
     
     for (let k = 1; k <= 5; k++) {
+        // Draw left column multi-row text
         row_g.append('text')
         .transition()
         .duration(1000)
@@ -227,6 +229,7 @@ async function draw_market_disruption() {
         .text(d => {return data.rowTexts[d]['text' + k]});
 
         if (k <= 2) {
+            // Draw row separting lines
             row_g.append("line")
             .transition()
             .duration(1000)
@@ -238,6 +241,7 @@ async function draw_market_disruption() {
         }
     }
     
+    // Add percentages of each row
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -248,6 +252,7 @@ async function draw_market_disruption() {
     .attr('fill', max_perc_color)
     .text(d => d);
     
+    // Add '%' of each row
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -258,6 +263,7 @@ async function draw_market_disruption() {
     .attr('fill', max_perc_color)
     .text('%');
 
+    // Draw triangles of every row
     var arc = d3.symbol().type(d3.symbolTriangle);
     row_g
     .append('path')
@@ -286,12 +292,14 @@ async function draw_print_volumes() {
         .style("left", '745px')
         .style("top", '10px');
 
+    // Add titles of the block
     const titles = data.titles;
     const title_g = svg.append("g");
     for (let k = 0; k < titles.length; k++) {
         draw_title_el(title_g, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
     }
 
+    // Configuration for polygon
     let sx = 170, sy = 63;
     const x_inc1 = 25, y_inc1 = 14, x_inc2 = 57, y_inc2 = -3;
     const rx = sx + 1, ry = sy - 5;
@@ -302,6 +310,7 @@ async function draw_print_volumes() {
         {"x": rx + 31, "y": ry - 12}
     ];
 
+    // Draw filled polygon of the top of the piles
     svg.selectAll("polygon")
     .data([poly])
     .enter()
@@ -329,6 +338,7 @@ async function draw_print_volumes() {
             color = max_perc_color;
         }
         
+        // Draw lines(left) of the pile
         svg.append("line")
         .transition()
         .duration(1000)
@@ -339,6 +349,7 @@ async function draw_print_volumes() {
         .attr("x2", sx+x_inc1)
         .attr("y2", sy+y_inc1);
 
+        // Draw lines(right) of the pile
         svg.append("line")
         .transition()
         .duration(1000)
@@ -351,7 +362,7 @@ async function draw_print_volumes() {
         sy += 4.8;
     }
 
-    // Top stains
+    // Top stains of the filled roof
     for (let k = 0; k < 6; k++) {
         svg.append("line")
         .transition()
@@ -370,6 +381,7 @@ async function draw_print_volumes() {
         .append("g")
         .attr("class", "vol-row");
     
+    // Draw percentage(numbers)
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -380,6 +392,7 @@ async function draw_print_volumes() {
     .attr('fill', (d) => {return d.color})
     .text(d => {return d.perc;});
     
+    // Add '%' for each of the rows
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -393,6 +406,7 @@ async function draw_print_volumes() {
     .attr('fill', (d) => {return d.color})
     .text(d => '%');
 
+    // Add note1(first line)
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -406,6 +420,7 @@ async function draw_print_volumes() {
     .attr('fill', (d) => {return d.color})
     .text(d => {return d.note1;});
 
+    // Add note2(second line)
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -419,6 +434,7 @@ async function draw_print_volumes() {
     .attr('fill', (d) => {return d.color})
     .text(d => {return d.note2;});
 
+    // Draw separating line
     svg.append("line")
     .transition()
     .duration(1000)
@@ -428,6 +444,7 @@ async function draw_print_volumes() {
     .attr("x2", 160)
     .attr("y2", 115);
 
+    // Draw flipped triangle
     var triangle = [
         {"x": 140, "y": 90},
         {"x": 157, "y": 90},
@@ -454,6 +471,7 @@ async function draw_print_volumes() {
  */
 async function draw_vertical_demand() {
     const data = await d3.json("./../data/vertical-demand.json");
+    // create svg elements
     const svg = d3.select("#wrapper")
         .append("svg")
         .attr("width", 475)
@@ -462,11 +480,13 @@ async function draw_vertical_demand() {
         .style("left", '255px')
         .style("top", '250px');
 
+    // Add title of the block
     const titles = data["titles"];
     for (let k = 0; k < titles.length; k++) {
         draw_title_el(svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
     }
 
+    // Add increase/decrease boxes and text
     for (let k = 0; k < data.boxes.length; k++) {
         svg.append('rect')
         .transition()
@@ -486,12 +506,14 @@ async function draw_vertical_demand() {
         .text(data.boxes[k].label)
     }
 
+    // create g element for each of the row
     const row_g = svg.selectAll(".demand-row")
             .data(data.demand_rows)
             .enter()
             .append("g")
             .attr("class", "demand-row");
 
+    // Add label on the first column like Education
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -506,6 +528,7 @@ async function draw_vertical_demand() {
     .attr('class', 'text-9-thick')
     .text(d => {return d.label})
 
+    // Add label2(second line)
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -514,6 +537,7 @@ async function draw_vertical_demand() {
     .attr('class', 'text-9-thick')
     .text(d => {return d.label2})
 
+    // Draw row separating line
     row_g.append("line")
     .transition()
     .duration(1000)
@@ -525,6 +549,7 @@ async function draw_vertical_demand() {
     .attr("x2", (d) => { return data.row_start.left + 470;})
     .attr("y2", (d, i) => { return data.row_start.top + 12 + i*30;});
 
+    // Draw bars of left side
     const bar_middle = 295;
     const times = 2.15;
     row_g.append('rect')
@@ -537,6 +562,7 @@ async function draw_vertical_demand() {
     .attr('height', 19)
     .attr('fill', sec_max_perc_color);
 
+    // Add left side pecentage(number)
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -547,6 +573,7 @@ async function draw_vertical_demand() {
     .attr('fill', sec_max_perc_color)
     .text(d => {return d.left_perc})
 
+    // Add left '%' of the bars
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -557,6 +584,7 @@ async function draw_vertical_demand() {
     .attr('fill', sec_max_perc_color)
     .text('%')
 
+    // Draw bars of right side
     row_g.append('rect')
     .transition()
     .duration(1000)
@@ -567,6 +595,7 @@ async function draw_vertical_demand() {
     .attr('height', 19)
     .attr('fill', max_perc_color)
 
+    // Add hover effects
     row_g.on('mousemove', function(ev, d) {
         on_hover(ev, d, 'move', this);
     })
@@ -574,6 +603,7 @@ async function draw_vertical_demand() {
         on_hover(ev, d, 'out', this);
     });
 
+    // Add right side pecentage(number)
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -584,6 +614,7 @@ async function draw_vertical_demand() {
     .attr('fill', max_perc_color)
     .text(d => {return '+' + d.right_perc})
 
+    // Add '%' text for each row
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -600,6 +631,7 @@ async function draw_vertical_demand() {
     .attr('fill', max_perc_color)
     .text('%');
 
+    // Common method for hover effects
     function on_hover(ev, d, action, me) {
         let selector;
         if (ev.target.classList.contains('left-bar')) {
@@ -632,6 +664,7 @@ async function draw_collab_cloud_opp() {
         .style("left", '745px')
         .style("top", '250px');
 
+    // Add titles
     const titles = data["titles"];
     for (let k = 0; k < titles.length; k++) {
         draw_title_el(svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
@@ -643,6 +676,7 @@ async function draw_collab_cloud_opp() {
     .append("g")
     .attr("class", "oppo-row");
 
+    // Add label1(first line)
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -657,6 +691,7 @@ async function draw_collab_cloud_opp() {
     .attr('class', 'text-10-thick')
     .text(d => {return d.label1});
 
+    // Add label2(second line)
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -665,6 +700,7 @@ async function draw_collab_cloud_opp() {
     .attr('y', (d, i) => {return data.row_start.top + i*50 + 12;})
     .text(d => {return d.label2});
 
+    // Add percentange(number) for each row
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -675,6 +711,7 @@ async function draw_collab_cloud_opp() {
     .attr('fill', max_perc_color)
     .text(d => {return d.perc});
 
+    // Add '%' text
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -685,6 +722,7 @@ async function draw_collab_cloud_opp() {
     .attr('fill', max_perc_color)
     .text('%');
 
+    // Draw line
     row_g.append("line")
     .transition()
     .duration(1000)
@@ -696,6 +734,7 @@ async function draw_collab_cloud_opp() {
     .attr("x2", (d) => { return data.row_start.left + 240;})
     .attr("y2", (d, i) => { return data.row_start.top + 30 + i*50;});
 
+    // Add triangle
     var arc = d3.symbol().type(d3.symbolTriangle);
     row_g
     .append('path')
@@ -729,12 +768,14 @@ async function draw_channel_partners() {
         draw_title_el(svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
     }
 
+    // create 'g' element for every row
     const row_g = svg.selectAll(".supplier-row")
     .data(data.supplier_rows)
     .enter()
     .append("g")
     .attr("class", "supplier-row");
 
+    // Add label1 of first line
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -749,6 +790,7 @@ async function draw_channel_partners() {
     .attr('class', 'text-10-thick')
     .text(d => {return d.label1});
 
+    // Add label1 of second line
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -757,6 +799,7 @@ async function draw_channel_partners() {
     .attr('class', 'text-10-thick')
     .text(d => {return d.label2});
 
+    // draw bar charts of each row
     const bar_start = 140;
     const times = 3;
     row_g.append('rect')
@@ -774,6 +817,7 @@ async function draw_channel_partners() {
         d3.select(this).select('rect').attr("fill", max_perc_color);
     });
 
+    // add percentages(number) of each row
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -784,6 +828,7 @@ async function draw_channel_partners() {
     .text(d => {return d.perc})
     .attr('fill', max_perc_color);
 
+    // add '%' of each row
     row_g.append('text')
     .transition()
     .duration(1000)
@@ -794,6 +839,7 @@ async function draw_channel_partners() {
     .text('%')
     .attr('fill', max_perc_color);
 
+    // Add the bottom cells of percentage from 0%-100%
     svg.selectAll(".percent")
     .data(data.percents)
     .enter()
@@ -817,6 +863,7 @@ async function draw_channel_partners() {
 async function draw_business_recovery() {
     const data = await d3.json("./../data/business-recovery-pie.json");
 
+    // Add svg for title
     const title_svg = d3.select("#wrapper")
         .append('svg')
         .attr("width", 200)
@@ -825,27 +872,33 @@ async function draw_business_recovery() {
         .style("left", '750px')
         .style("top", '490px')
 
+    // titles in the svg
     const titles = data["titles"];
     for (let k = 0; k < titles.length; k++) {
         draw_title_el(title_svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
     }
 
+    // Configs of pie chart
     const width = 140,
         height = 140,
         radius = Math.min(width, height) / 2;
 
+    // Arc instance
     const arc = d3.arc()
         .outerRadius(radius - 10)
         .innerRadius(0);
 
+    // label inside arc instance
     const labelArc = d3.arc()
         .outerRadius(radius - 55)
         .innerRadius(radius - 40);
 
+    // Pie instance with sorted data
     const pie = d3.pie()
         .sort(null)
         .value((d) => { return d; });
 
+    // add svg for pie chart
     const svg = d3.select("#wrapper")
         .append("svg")
         .attr("width", 266)
@@ -856,12 +909,14 @@ async function draw_business_recovery() {
         .append("g")
         .attr("transform", "translate(" + ((width / 2) + 10) + "," + ((height / 2) + 10)  + ")");
 
+    // add g element for each of arc
     const arc_g = svg.selectAll(".arc")
     .data(pie(data.values))
     .enter()
     .append("g")
     .attr("class", "arc");
 
+    // fill the arc with defined color in json
     arc_g.append("path")
     .transition()
     .duration(1000)
@@ -870,6 +925,7 @@ async function draw_business_recovery() {
         return data.colors[i];
     });
 
+    // Add mouse hover effect
     arc_g.on('mousemove', function(ev, d) {
         const color = data.colors[d.index];
         d3.select(this).select('path').attr("fill", color + '80');
@@ -879,6 +935,7 @@ async function draw_business_recovery() {
         d3.select(this).select('path').attr("fill", color);
     });
 
+    // Draw percentages(number)
     arc_g.append("text")
     .transition()
     .duration(1000)
@@ -892,6 +949,7 @@ async function draw_business_recovery() {
     })
     .text((d) => { return d.data; });
 
+    // Add '%' text for each row
     arc_g.append("text")
     .transition()
     .duration(1000)
@@ -905,12 +963,14 @@ async function draw_business_recovery() {
     .style("fill", (d, i) => {return get_item(d, i, 'label').color;})
     .text((d) => { return '%'; });
     
+    // Create g element for each hints
     const note_g = svg.selectAll(".hint")
             .data(pie(data.values))
             .enter()
             .append("g")
             .attr("class", "hint");
 
+    // Add rectangular small boxes to the right side of list
     note_g.append('rect')
     .transition()
     .duration(1000)
@@ -920,6 +980,7 @@ async function draw_business_recovery() {
     .attr('height', 10)
     .attr('fill', (d, i) => {return data.colors[i];});
 
+    // add note1 along with rect boxes
     note_g.append('text')
     .transition()
     .duration(1000)
@@ -928,6 +989,7 @@ async function draw_business_recovery() {
     .attr('class', 'text-10-thin')
     .text((d,i) => {return get_item(d, i, 'hints').note1})
 
+    // add note2(second line) along the rect boxes
     note_g.append('text')
     .transition()
     .duration(1000)
@@ -936,6 +998,7 @@ async function draw_business_recovery() {
     .attr('class', 'text-10-thin')
     .text((d, i) => {return get_item(d, i, 'hints').note2 || ''})
 
+    // common method for geting element
     function get_item(d, i, prop) {
         let indx = d.data;
         if (indx === 6) {

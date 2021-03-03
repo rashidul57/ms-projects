@@ -123,9 +123,10 @@
         .html(function (d) {
             if (d.country) {
               update_tooltip_position(tooltip);
+              const cases = d.total_cases.toLocaleString('en-US');
               return `<div>
                 <p>Country: ${d.country}</p>
-                <p>Infected: ${d.total_cases}</p>
+                <p>Infected: ${cases}</p>
               </div>`;
             }
         });
@@ -149,7 +150,7 @@
         .attr('d', path)
         .attr('class', 'country')
         .style('fill', function (d) {
-          return fill_country(d, 'over');
+          return fill_country(d, 'out');
         })
         .on('mouseover', function (d) {
             d3.select(this)
@@ -201,9 +202,10 @@
     function transformData(data, currentYear) {
         let newArr = _.map(data, (record) => {
           const year = new Date(record['last_updated_date']).getFullYear();
+          const total_cases = Number(Number(record['total_cases'] || 0).toFixed(0));
           return {
               country: record['location'],
-              total_cases: record['total_cases'],
+              total_cases,
               code: record['iso_code'],
               date: record['last_updated_date'],
               year
@@ -243,7 +245,7 @@
     function fill_country(d, action) {
       let perc = Number(d.total_cases || 0) * 100 /total_cases;
       perc = perc > 1 ? 1 : perc;
-      const factor = action === 'over' ? 1 : 0.5;
+      const factor = action === 'over' ? 0.6 : 1;
       perc = perc * factor;
       const color = `rgba(255, 0, 0, ${perc})`;
       return color;

@@ -1,69 +1,253 @@
-<html>
+<!DOCTYPE html>
 <head>
-    <meta charset="utf-8">
-    <title>A D3 map using topojson</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.10.0/d3.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-queue/3.0.7/d3-queue.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.0/topojson.min.js"></script>
-    
-    <link href="http://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet" type="text/css">
-<style>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
+
+  <style>
     body {
-        padding: 0;
-        margin: 0;
-        background: whitesmoke;
-    }
-    h1 {
-        position: absolute;
-        left: 20px;
-        top: 10px;
-        font-family: "Proxima Nova", Montserrat, sans-serif;
-        font-size: 2em;
-        font-weight: 100;
-        color: #005DAA; /* offical UK Kentucky blue */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: "Open Sans", sans-serif;
     }
     .country {
-      stroke: #000;
-      /* fill:#005DAA; */
-      fill: #fff;
-    } 
-</style>
-</head>
-<body>
-    <h1>World Countries</h1>
-  <script>
-        // https://gist.github.com/bquast/944781aa6dcc257ebf9aeee3c098b637
-    var width = 900,
-        height = 600;
-    
-    var svg = d3.select( "body" )
-          .append( "svg" )
-          .attr( "width", width )
-          .attr( "height", height );
-      
-    var projection = d3.geoEquirectangular()
-        .scale(170)
-        .translate([width / 2, height / 2]);
-
-    var geoPath = d3.geoPath()
-        .projection(projection);
-    // const jsonUrl = 'https://raw.githubusercontent.com/Bradleykingz/working-with-d3/master/files/world.geo.json';
-    const jsonUrl = 'world-topo.json';
-    d3.queue()
-        .defer(d3.json, jsonUrl)
-        .await(ready);
-      
-    function ready(error, countries){
-         svg.append("g")
-            .selectAll("path")
-            .data( topojson.feature(countries, countries.objects.countries).features)
-            .enter()
-            .append("path")
-            .attr( "d", geoPath )
-            .attr("class","country");  
-        
+      stroke-width: 1;
+      stroke: darkslategrey;
+      fill: white;
+      transition: all 0.25s ease-in-out;
     }
 
-  </script>
+    .country:hover {
+      cursor: pointer;
+      fill: #555555;
+    }
+
+    div.tooltip {
+      position: absolute;
+      text-align: center;
+      min-width: 60px;
+      transition: opacity 0.25s ease-in-out;
+      min-height: 28px;
+      padding: 8px 12px;
+      font: 12px sans-serif;
+      background: white;
+      border: 1px solid lightgray;
+      border-radius: 4px;
+      pointer-events: none;
+    }
+
+    button {
+      background: transparent;
+      border: 1px solid lightgray;
+      border-radius: 4px;
+      padding: 4px 16px;
+      transition: all 0.25s ease-in-out;
+    }
+
+    button:hover {
+      cursor: pointer;
+      border: 1px solid darkgray;
+    }
+  </style>
+  <script src="json/world.js"></script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="https://d3js.org/topojson.v2.min.js"></script>
+  <script src="https://d3js.org/d3-color.v1.min.js"></script>
+  <script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+  <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+  <script src="https://d3js.org/d3-fetch.v1.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tinycolor/1.4.1/tinycolor.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.15/lodash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-tip@0.9.1/dist/index.min.js"></script>
+  <title></title>
+</head>
+<body>
+<h1>Life Expectancy of the World Between 2000-2019</h1>
+<div style="display:flex; align-items: center">
+<!--  These styles create the bounding box-->
+  <div style="overflow: hidden; border: 1px solid black;">
+    <div class="home"></div>
+  </div>
+  <div style="margin-left: 24px">
+    <h2 id="currentYear">2000</h2>
+    <button style="background: rgb(240,246,253)" onclick="subtractYearAndRerender()">
+      <
+    </button>
+
+    <button style="background: rgb(244,249,254)" onclick="addYearAndRerender()">
+      >
+    </button>
+</div>
+
+  </div>
 </body>
-</html>
+
+<script>
+   // https://soshace.com/advanced-mapmaking-using-d3-d3-scale-and-d3-zoom-with-changing-data-to-create-sophisticated-maps/
+  function addYearAndRerender() {
+      currentYear  = currentYear + 1;
+      reRender(currentYear);
+  }
+
+  function subtractYearAndRerender() {
+      currentYear = currentYear - 1;
+      reRender(currentYear);
+  }
+</script>
+
+<script>
+    let currentYear = 2021;
+
+    // let lifeExpectancyCsv = 'https://raw.githubusercontent.com/Bradleykingz/working-with-d3/master/files/life-expectancy.csv';
+    let covidCsv = './data1/covid.csv';
+    let worldMapJson = 'https://raw.githubusercontent.com/Bradleykingz/working-with-d3/master/files/world.geo.json'
+
+    const width = 1000;
+    const height = 700;
+    let total_cases;
+
+    const projection = d3.geoMercator()
+        .translate([width / 2, window.innerHeight / 1.4])    // translate to center of screen
+        .scale([150]);
+
+    const path = d3.geoPath().projection(projection);
+    let zoom = d3.zoom()
+        .scaleExtent([1, 10])
+        .translateExtent([[-500,-300], [1500, 1000]])
+        .on('zoom', () => {
+            svg.attr('transform', d3.event.transform)
+        });
+
+    const container = d3.select(".home");
+    const svg = container.append("svg");
+
+    const tooltip = d3.tip().attr('class', 'tooltip')
+        .html(function (d) {
+            if (d.country) {
+              tooltip
+              .style("left", d3.event.pageX - 50 + "px")
+              .style("top", d3.event.pageY - 70 + "px");
+
+              return `<div>
+                <p>Country: ${d.country}</p>
+                <p>Infected: ${d.total_cases}</p>
+              </div>`;
+            }
+        });
+
+    svg.attr("width", width)
+        .attr("height", height)
+      //.style("background", 'ivory')
+        .append('g')
+        .call(tooltip);
+
+    container.call(zoom);
+
+    const render = (path, data, scale) => svg.selectAll()
+        .data(data)
+        .enter()
+        .append('path')
+        .attr('d', path)
+        .attr('class', 'country')
+        .style('fill', function (d) {
+            const alpha = 10 * Number(d.total_cases || 0)/total_cases;
+            const color = `rgba(255, 0, 0,${alpha})`;
+            return color;
+        })
+        .on('mouseover', function (d) {
+            d3.select(this)
+            .style('fill', function () {
+              const alpha = 15 * Number(d.total_cases || 0)/total_cases;
+              const color = `rgba(255, 0, 0,${alpha})`;
+              return color;
+            });
+            tooltip.show(d, this)
+        })
+        .on('mouseout', function (d) {
+            d3.select(this)
+            .style('fill', function (d) {
+                const alpha = 10 * Number(d.total_cases || 0)/total_cases;
+                const color = `rgba(255, 0, 0,${alpha})`;
+                return color;
+            });
+            tooltip.hide()
+        })
+        .on('mousedown', function (d) {
+            // console.log(d.year, d.total_cases);
+        });
+
+
+    d3.csv(covidCsv).then(data => {
+        total_cases = _.reduce(data, (sum, item) => {
+          return sum += Number(item.total_cases || 0);
+        }, 0);
+        d3.json(worldMapJson).then(worldMap => {
+            let mapData = getYearData(data, currentYear, worldMap, true);
+            // let extent = d3.extent(mapData, d => d.lifeExpectancy);
+            let extent = d3.extent(mapData, d => d['total_cases']);
+
+            let colorScale = d3.scaleSequential(d3.interpolateRdYlBu)
+                .domain(extent)
+
+            render(path, mapData, colorScale);
+        });
+    });
+
+
+    function reRender(year) {
+        d3.csv(covidCsv).then(data => {
+          max_case = number(_.maxBy(data, 'total_cases').total_cases);
+            d3.json(worldMapJson).then(worldMap => {
+
+                let mapData = getYearData(data, year, worldMap, true);
+
+                // let extent = d3.extent(mapData, d => d.lifeExpectancy);
+                let extent = d3.extent(mapData, d => d['total_cases']);
+
+                let colorScale = d3.scaleSequential(d3.interpolateRdYlBu)
+                    .domain(extent)
+
+                let element = document.getElementById('currentYear');
+                element.innerHTML = year;
+                render(path, mapData, colorScale);
+            });
+        });
+    }
+
+    function transformData(data, currentYear) {
+        let newArr = _.map(data, (record) => {
+          const year = new Date(record['last_updated_date']).getFullYear();
+          return {
+              country: record['location'],
+              total_cases: record['total_cases'],
+              code: record['iso_code'],
+              date: record['last_updated_date'],
+              year
+          };
+        });
+
+        return _.filter(newArr, today => {
+            return today['year'] === currentYear;
+        });
+    }
+
+    function getYearData(data, currentYear, worldMap, transform) {
+        let currentYearArray = [];
+        if (transform) {
+            currentYearArray = transformData(data, currentYear);
+        }
+        else {
+            currentYearArray = data;
+        }
+
+        const c_data = _(currentYearArray)
+            .keyBy('code')
+            .merge(_.keyBy(worldMap.features, 'properties.iso_a3'))
+            .values()
+            .value();
+
+        return c_data;
+    }
+</script>

@@ -1,0 +1,98 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>A D3 map using topojson</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.10.0/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-queue/3.0.7/d3-queue.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.0/topojson.min.js"></script>
+    
+    <link href="http://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet" type="text/css">
+<style>
+    body {
+        /* padding: 0;
+        margin: 0;
+        background: whitesmoke; */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        font-family: "Open Sans", sans-serif;
+    }
+    h1 {
+        position: absolute;
+        left: 20px;
+        top: 10px;
+        font-family: "Proxima Nova", Montserrat, sans-serif;
+        font-size: 2em;
+        font-weight: 100;
+        color: #005DAA; /* offical UK Kentucky blue */
+    }
+    .country {
+      stroke: #000;
+      fill:#005DAA;
+      /* fill: #fff; */
+    } 
+
+    .tooltip {
+        position: absolute;
+        display: none;
+        min-width: 80px;
+        height: auto;
+        background: none repeat scroll 0 0 #ffffff;
+        border: 1px solid #6F257F;
+        padding: 14px;
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+    <h1>World Countries</h1>
+  <script>
+    // https://gist.github.com/bquast/944781aa6dcc257ebf9aeee3c098b637
+    const width = 1000;
+    const height = 700;
+    
+    var svg = d3.select( "body" )
+          .append( "svg" )
+          .attr( "width", width )
+          .attr( "height", height );
+      
+    var projection = d3.geoEquirectangular()
+        .scale(170)
+        .translate([width / 2, height / 2]);
+
+    var geoPath = d3.geoPath().projection(projection);
+    const jsonUrl = 'https://raw.githubusercontent.com/Bradleykingz/working-with-d3/master/files/world.geo.json';
+    // const jsonUrl = 'world-topo.json';
+    d3.queue()
+    .defer(d3.json, jsonUrl)
+    .await(ready);
+      
+    function ready(error, countries){
+        var tooltip = d3.select("body").append("div").attr("class", "tooltip");
+         svg.append("g")
+            .selectAll("path")
+            // .data( topojson.feature(countries, countries.objects.countries).features)
+            .data( countries.features)
+            .enter()
+            .append("path")
+            .attr( "d", geoPath )
+            .attr("class", "country")
+            .attr('fill', (a, b) => {
+                // debugger
+            })
+            .on("mousemove", function(d){
+                tooltip
+                .style("left", d3.event.pageX - 50 + "px")
+                .style("top", d3.event.pageY - 70 + "px")
+                .style("display", "inline-block")
+                .html((d.area) + "<br>" + "£" + (d.value));
+            })
+    		.on("mouseout", function(d){ tooltip.style("display", "none");});;  
+        
+    }
+   
+  </script>
+</body>
+</html>

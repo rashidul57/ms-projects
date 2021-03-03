@@ -5,7 +5,10 @@ let max_perc_color, sec_max_perc_color;
  * Adds the text inside the left black box 
  */
 async function add_left_bar_texts() {
+    // load data for this block from json file
     const data = await d3.json("./../data/left-bar-text.json");
+
+    // Add the text inside wrapper
     const wrapper = d3.select("#wrapper")
     wrapper
     .selectAll("text")
@@ -48,11 +51,14 @@ function draw_title_el(svg, level, dx, dy, text) {
  * "Impact of COVID-19 on business"
  */
 async function draw_business_impact() {
+    // load data for this block from json file
     const data = await d3.json("./../data/business-impact-donut.json");
+
     // reused all over the page
     max_perc_color = data.colors[1];
     sec_max_perc_color = data.colors[4];
 
+    // create svg for title
     const title_svg = d3.select("#wrapper")
         .append('svg')
         .attr("width", 200)
@@ -67,6 +73,7 @@ async function draw_business_impact() {
         draw_title_el(title_svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
     }
 
+    // configurations for pie chart
     const width = 140,
         height = 140,
         radius = Math.min(width, height) / 2;
@@ -196,7 +203,10 @@ async function draw_business_impact() {
  * "Market disruption will drive innovation"
  */
 async function draw_market_disruption() {
+    // load data for this block from json file
     const data = await d3.json("./../data/market-disruption.json");
+
+    // create svg object to hold contents
     const svg = d3.select("#wrapper")
         .append("svg")
         .attr("width", 266)
@@ -283,7 +293,10 @@ async function draw_market_disruption() {
  * "Office print volumes are in free fall"
  */
 async function draw_print_volumes() {
+    // load data for this block from json file
     const data = await d3.json("./../data/print-volumes.json");
+
+    // create svg element
     const svg = d3.select("#wrapper")
         .append("svg")
         .attr("width", 266)
@@ -470,7 +483,9 @@ async function draw_print_volumes() {
  * "Vertical demand varies"
  */
 async function draw_vertical_demand() {
+    // load data for this block from json file
     const data = await d3.json("./../data/vertical-demand.json");
+
     // create svg elements
     const svg = d3.select("#wrapper")
         .append("svg")
@@ -655,7 +670,10 @@ async function draw_vertical_demand() {
  * "Collaboration, cloud and digitization opportunities"
  */
 async function draw_collab_cloud_opp() {
+    // load data for this block from json file
     const data = await d3.json("./../data/collab-cloud-digi.json");
+
+    // create svg element
     const svg = d3.select("#wrapper")
         .append("svg")
         .attr("width", 475)
@@ -670,6 +688,7 @@ async function draw_collab_cloud_opp() {
         draw_title_el(svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
     }
 
+    // create a g element for each row
     const row_g = svg.selectAll(".oppo-row")
     .data(data.opportunity_rows)
     .enter()
@@ -754,7 +773,10 @@ async function draw_collab_cloud_opp() {
  * "Channel partners expect more support from their suppliers"
  */
 async function draw_channel_partners() {
+    // load data for this block from json file
     const data = await d3.json("./../data/channel-partners.json");
+
+    // create svg element
     const svg = d3.select("#wrapper")
         .append("svg")
         .attr("width", 475)
@@ -763,6 +785,7 @@ async function draw_channel_partners() {
         .style("left", '255px')
         .style("top", '490px');
 
+    // add titles
     const titles = data["titles"];
     for (let k = 0; k < titles.length; k++) {
         draw_title_el(svg, titles[k].level, titles[k].left, titles[k].top, titles[k].text);
@@ -861,6 +884,7 @@ async function draw_channel_partners() {
  * "Most are cautious about business recovery time"
  */
 async function draw_business_recovery() {
+    // load data for this block from json file
     const data = await d3.json("./../data/business-recovery-pie.json");
 
     // Add svg for title

@@ -99,8 +99,7 @@
 <script>
     let currentYear = 2000;
 
-    // let lifeExpectancyCsv = 'https://raw.githubusercontent.com/Bradleykingz/working-with-d3/master/files/life-expectancy.csv';
-    let covidCsv = './data/COVID-19 - Johns Hopkins University.csv';
+    let lifeExpectancyCsv = 'https://raw.githubusercontent.com/Bradleykingz/working-with-d3/master/files/life-expectancy.csv';
     let worldMapJson = 'https://raw.githubusercontent.com/Bradleykingz/working-with-d3/master/files/world.geo.json'
 
     const width = 1000;
@@ -131,7 +130,7 @@
 
     svg.attr("width", width)
         .attr("height", height)
-      //.style("background", 'ivory')
+      //   .style("background", 'ivory')
         .append('g')
         .call(tooltip);
 
@@ -144,27 +143,30 @@
         .attr('d', path)
         .attr('class', 'country')
         .style('fill', function (d) {
-            // return scale(d.lifeExpectancy);
+            return scale(d.lifeExpectancy);
         })
         .on('mouseover', function (d) {
-            // d3.select(this)
-            // .style('fill', tinycolor(scale(d.lifeExpectancy)).darken(10).toString());
-            // tooltip.show(d, this)
+            d3.select(this)
+                .style('fill', tinycolor(scale(d.lifeExpectancy)).darken(10).toString());
+            tooltip.show(d, this)
         })
         .on('mouseout', function (d) {
-            // d3.select(this)
-            // .style('fill', scale(d.lifeExpectancy));
-            // tooltip.hide()
+            d3.select(this)
+                .style('fill', scale(d.lifeExpectancy));
+            tooltip.hide()
         })
         .on('mousedown', function (d) {
-            // console.log(d.year, d.lifeExpectancy);
+            console.log(d.year, d.lifeExpectancy);
         });
 
 
-    d3.csv(covidCsv).then(data => {
+    d3.csv(lifeExpectancyCsv).then(data => {
         d3.json(worldMapJson).then(worldMap => {
             let mapData = getYearData(data, currentYear, worldMap, true);
+
             let extent = d3.extent(mapData, d => d.lifeExpectancy);
+
+            console.log(extent);
 
             let colorScale = d3.scaleSequential(d3.interpolateRdYlBu)
                 .domain(extent)
@@ -175,13 +177,12 @@
 
 
     function reRender(year) {
-        d3.csv(covidCsv).then(data => {
+        d3.csv(lifeExpectancyCsv).then(data => {
             d3.json(worldMapJson).then(worldMap => {
 
                 let mapData = getYearData(data, year, worldMap, true);
 
-                // let extent = d3.extent(mapData, d => d.lifeExpectancy);
-                
+                let extent = d3.extent(mapData, d => d.lifeExpectancy);
 
                 let colorScale = d3.scaleSequential(d3.interpolateRdYlBu)
                     .domain(extent)
@@ -194,7 +195,7 @@
     }
 
     function transformData(data, currentYear) {
-        // console.log(data[0]);
+        console.log(data[0]);
         let newArr = _.map(data, era => ({
             entity: era['Entity'],
             lifeExpectancy: +(era['LifeExpectacy']),

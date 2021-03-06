@@ -1,5 +1,5 @@
 
-function load_world_map() {
+function draw_world_map() {
     const width = 1000;
     const height = 700;
 
@@ -81,17 +81,20 @@ function update_tooltip_position(event, tooltip, d) {
 }
 
 function fill_country(d, action) {
-    let total = d.population;
+    let total = Number(d.population || 0);
     if (percentType === 'total_count') {
         total = _.reduce(covid_data, (sum, item) => {
             return sum += Number(item[selectedProperty.name] || 0);
         }, 0);
     }
     const count = Number(d[selectedProperty.name] || 0);
-    let perc = count * 100 / Number(total);
+    perc = count * 100 / Number(total);
     perc = perc > 1 ? 1 : perc;
     const factor = action === 'over' ? 0.6 : 1;
     perc = perc * factor;
-    const color = `rgba(255, 0, 0, ${perc})`;
+    let color = `rgba(255, 0, 0, ${perc})`;
+    if (selectedProperty.name.indexOf('vaccinated') > -1) {
+        color = `rgba(46, 114, 101, ${perc})`;
+    }
     return color;
 }

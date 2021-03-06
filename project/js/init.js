@@ -1,13 +1,29 @@
-let selectedProperty, percentType, covid_data;
+let selectedProperty, percentType, covid_data, dataSource, worldMapData;
+let mappedPopulation;
+const prop_fields = ['new_cases', 'new_deaths', 'total_cases', 'people_vaccinated', 'total_deaths', 'weekly_cases', 'weekly_deaths', 'biweekly_cases', 'biweekly_deaths'].map(field => {
+    const label = _.startCase(field.split('_').join(' '));
+    return {
+        name: field,
+        label
+    };
+});
+
 window.onload = function () {
-    
-    load_data().then(() => {
-        load_options();
-        load_world_map();
+    load_options();
+
+    load_map_topology()
+    .then(() => {        
+        return load_covid_data();
+    })
+   .then(() => {
+        draw_world_map();
     });
 }
 
-
+async function load_map_topology() {
+    let worldMapJson = './data/world.geo.json';
+    worldMapData = await d3.json(worldMapJson);
+}
 
 function load_options() {
     const modes = [
@@ -27,29 +43,12 @@ function load_options() {
         const selectedOption = d3.select(this).property("value");
         d3.selectAll('.container-box .item').style("display", "none");
         d3.select('.' + selectedOption).style("display", "inline-block");
-    });;
+    });
 
-    const prop_options = [
-        {name: 'total_cases', label: 'Total Cases'},
-        {name: 'new_cases', label: 'New Cases'},
-        {name: 'total_deaths', label: 'Total Deaths'},
-        // {name: 'reproduction_rate', label: 'Reproduction Rate', type: 'rate'},
-        {name: 'icu_patients', label: 'ICU Patients'},
-        {name: 'total_tests', label: 'Total Tests'},
-        // {name: 'positive_rate', label: 'Positive Rate', type: 'rate'},
-        {name: 'people_vaccinated', label: 'Vaccinated'},
-        // {name: 'population', label: 'Population'},
-        // {name: 'population_density', label: 'Population Density'},
-        {name: 'median_age', label: 'Median Age'},
-        {name: 'aged_65_older', label: 'Aged Over 65'},
-        {name: 'aged_70_older', label: 'Agred Over 70'},
-        {name: 'diabetes_prevalence', label: 'Diabetes Prevalence'},
-        // {name: 'life_expectancy', label: 'Life Expectancy'}
-    ];
-    selectedProperty = prop_options[0];
+    selectedProperty = prop_fields[0];
     d3.select("#drp-property")
     .selectAll('prop-options')
-    .data(prop_options)
+    .data(prop_fields)
     .enter()
     .append('option')
     .text((d) => { return d.label; })
@@ -57,8 +56,8 @@ function load_options() {
     
     d3.select("#drp-property").on("change", function(d) {
         const property = d3.select(this).property("value");
-        selectedProperty = prop_options.find(opt => opt.name === property);
-        load_world_map();
+        selectedProperty = prop_fields.find(opt => opt.name === property);
+        draw_world_map();
     });
 
     // 
@@ -78,16 +77,37 @@ function load_options() {
     d3.select("#drp-percent-type").on("change", function(d) {
         const property = d3.select(this).property("value");
         percentType = percent_options.find(opt => opt.name === property).name;
-        load_world_map();
+        draw_world_map();
+    });
+
+    // Data sources
+    const data_src_options = [
+        {name: 'owid', label: 'OWID'},
+        {name: 'ecdc', label: 'ECDC'},
+        {name: 'jhu', label: 'JHU'},
+        {name: 'who', label: 'WHO'}
+    ];
+    dataSource = data_src_options[0].name;
+    d3.select("#drp-data-source")
+    .selectAll('data-source-options')
+    .data(data_src_options)
+    .enter()
+    .append('option')
+    .text((d) => { return d.label; })
+    .attr("value", (d) => { return d.name; });
+    
+    d3.select("#drp-data-source").on("change", function(d) {
+        const property = d3.select(this).property("value");
+        dataSource = data_src_options.find(opt => opt.name === property).name;
+        load_covid_data().then(() => {
+            draw_world_map();
+        });
     });
 }
 
-async function load_data() {
-    let covidCsv = './data/owid/full-data.csv';
-    let worldMapJson = './data/world.geo.json';
+async function load_covid_data() {
+    let covidCsv = `./data/${dataSource}/full_data.csv`;
     covid_data = await d3.csv(covidCsv);
-    const worldMap = await d3.json(worldMapJson);
-
     total_cases = _.reduce(covid_data, (sum, item) => {
         return sum += Number(item.total_cases || 0);
     }, 0);
@@ -95,20 +115,24 @@ async function load_data() {
     covid_data = _.map(covid_data, (record) => {
         const year = new Date(record['last_updated_date']).getFullYear();
         const total_cases = Number(Number(record['total_cases'] || 0).toFixed(0));
+        const population = record.population || (mappedPopulation && mappedPopulation[record.location] && mappedPopulation[record.location].population);
         return {
             ...record,
             country: record['location'],
-            population: record['population'],
+            population,
             total_cases,
             code: record['iso_code'],
             date: record['last_updated_date'],
             year
         };
     });
+    if (!mappedPopulation) {
+        mappedPopulation = _.keyBy(covid_data, 'location');
+    }
 
     covid_data = _(covid_data)
         .keyBy('code')
-        .merge(_.keyBy(worldMap.features, 'properties.iso_a3'))
+        .merge(_.keyBy(worldMapData.features, 'properties.iso_a3'))
         .values()
         .value();
 }

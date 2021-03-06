@@ -2,25 +2,19 @@
 <head>
   <title>COVID Explorer</title>
   <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
-
-
   <script src="./libs/d3.min.js"></script>
   <script src="./libs/d3-tip.min.js"></script>
-  <!-- <script src="https://d3js.org/d3.v4.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/d3-tip@0.9.1/dist/index.min.js"></script> -->
-  <script src="https://d3js.org/topojson.v2.min.js"></script>
-  <script src="https://d3js.org/d3-color.v1.min.js"></script>
-  <script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
-  <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
-  <script src="https://d3js.org/d3-fetch.v1.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tinycolor/1.4.1/tinycolor.js"></script>
+  <script src="./libs/topojson.v2.min.js"></script>
+  <!-- <script src="https://d3js.org/d3-color.v1.min.js"></script> -->
+  <!-- <script src="https://d3js.org/d3-interpolate.v1.min.js"></script> -->
+  <!-- <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script> -->
+  <!-- <script src="./libs/d3-fetch.v1.min.js"></script> -->
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/tinycolor/1.4.1/tinycolor.js"></script> -->
   <script src="./libs/lodash.min.js"></script>
-  <script
-  src="https://code.jquery.com/jquery-3.6.0.min.js"
-  integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
-  crossorigin="anonymous"></script>
+  <script src="./libs/jquery-3.6.0.min.js"></script>
 
-  <script src="./js/script.js"></script>
+  <script src="./js/init.js"></script>
+  <script src="./js/world-map.js"></script>
   <link rel="stylesheet" type="text/css" href="./styles/custom.css"/>
 </head>
 <body>
@@ -33,10 +27,16 @@
         <span class='caption'>Property</span>
         <select id="drp-property"></select>
       </span>
+      <span class='option'>
+        <span class='caption'>By</span>
+        <select id="drp-percent-type"></select>
+      </span>
     </div>
 <!--  These styles create the bounding box-->
-  <div style="overflow: hidden; border: 1px solid black;">
-    <div class="world-map"></div>
+  <div class='container-box'>
+    <div class="world-map item"></div>
+    <div class="table item">Table</div>
+    <div class="chart item">Chart</div>
   </div>
 
 </body>

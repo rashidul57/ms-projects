@@ -11,8 +11,8 @@ function draw_world_map() {
     let zoom = d3.zoom()
         .scaleExtent([1, 10])
         .translateExtent([[-500,-300], [1500, 1000]])
-        .on('zoom', () => {
-            // svg.attr('transform', d3.event.transform)
+        .on('zoom', (event) => {
+            svg.attr('transform', event.transform)
         });
 
     const container = d3.select(".world-map");
@@ -37,7 +37,7 @@ function draw_world_map() {
         .append('g')
         .call(tooltip);
 
-    // container.call(zoom);
+    container.call(zoom);
 
     const render = (path, data) => svg.selectAll()
     .data(data)

@@ -1,6 +1,6 @@
-let selectedProperty, percentType, covid_data, dataSource, worldMapData;
-let mappedPopulation;
-const prop_fields = ['new_cases', 'new_deaths', 'total_cases', 'people_vaccinated', 'total_deaths', 'weekly_cases', 'weekly_deaths', 'biweekly_cases', 'biweekly_deaths'].map(field => {
+let selectedProperty, percentType, covid_data, dataSource, worldMapData, selectedMode;
+let mappedCovidData;
+const prop_fields = ['total_cases', 'new_cases', 'new_deaths', 'people_vaccinated', 'total_deaths', 'weekly_cases', 'weekly_deaths', 'biweekly_cases', 'biweekly_deaths'].map(field => {
     const label = _.startCase(field.split('_').join(' '));
     return {
         name: field,
@@ -40,9 +40,20 @@ function load_options() {
     .attr("value", (d) => { return d.name; });
     
     d3.select("#drp-mode").on("change", function(d) {
-        const selectedOption = d3.select(this).property("value");
+        const selectedMode = d3.select(this).property("value");
         d3.selectAll('.container-box .item').style("display", "none");
-        d3.select('.' + selectedOption).style("display", "inline-block");
+        d3.select('.' + selectedMode).style("display", "inline-block");
+        switch (selectedMode) {
+            case 'world-map':
+                draw_world_map();
+                break;
+            case 'table':
+                // draw_chart();
+                break;
+            case 'chart':
+                draw_chart();
+                break;
+        }
     });
 
     selectedProperty = prop_fields[0];
@@ -82,10 +93,10 @@ function load_options() {
 
     // Data sources
     const data_src_options = [
+        {name: 'who', label: 'WHO'},
         {name: 'owid', label: 'OWID'},
         {name: 'ecdc', label: 'ECDC'},
-        {name: 'jhu', label: 'JHU'},
-        {name: 'who', label: 'WHO'}
+        {name: 'jhu', label: 'JHU'}
     ];
     dataSource = data_src_options[0].name;
     d3.select("#drp-data-source")
@@ -115,20 +126,33 @@ async function load_covid_data() {
     covid_data = _.map(covid_data, (record) => {
         const year = new Date(record['last_updated_date']).getFullYear();
         const total_cases = Number(Number(record['total_cases'] || 0).toFixed(0));
-        const population = record.population || (mappedPopulation && mappedPopulation[record.location] && mappedPopulation[record.location].population);
+        const population = Number(record.population || (mappedCovidData && mappedCovidData[record.location] && mappedCovidData[record.location].population));
+        const code = record.iso_code || (mappedCovidData && mappedCovidData[record.location] && mappedCovidData[record.location].iso_code);
         return {
             ...record,
             country: record['location'],
             population,
             total_cases,
-            code: record['iso_code'],
+            code,
             date: record['last_updated_date'],
             year
         };
     });
-    if (!mappedPopulation) {
-        mappedPopulation = _.keyBy(covid_data, 'location');
+    if (!mappedCovidData) {
+        mappedCovidData = _.keyBy(covid_data, 'location');
     }
+
+    const grouped_data = _.groupBy(covid_data, 'country');
+    covid_data = _.map(grouped_data, ((items, country) => {
+        const record = {country, population: items[0].population, code: items[0].code};
+        prop_fields.forEach(field => {
+            items.forEach(item => {
+                record[field.name] = Number(item[field.name]) || 0;
+                record[field.name] += Number(item[field.name]) || 0;
+            });
+        });
+        return record;
+    }));
 
     covid_data = _(covid_data)
         .keyBy('code')

@@ -24,7 +24,10 @@ body {
     height: 700px;
     width: 1000px;
 }
-
+.chart{
+    height: calc(100% - 100px);
+    width: 100%;
+}
 .country {
     stroke-width: 1;
     stroke: darkslategrey;

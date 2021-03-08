@@ -28,13 +28,17 @@
         <span class='caption'>Property</span>
         <select id="drp-property"></select>
       </span>
-      <span class='option'>
+      <span class='option hide-for-chart'>
         <span class='caption'>By</span>
         <select id="drp-percent-type"></select>
       </span>
-      <span class='option'>
+      <span class='option hide-for-chart'>
         <span class='caption'>Data Source</span>
         <select id="drp-data-source"></select>
+      </span>
+      <span class='option chart-option'>
+        <span class='caption'>Chart Type</span>
+        <select id="drp-chart-type"></select>
       </span>
     </div>
 <!--  These styles create the bounding box-->
@@ -42,13 +46,15 @@
     <div class="world-map item"></div>
     <div class="table item">Table</div>
     <div class="chart item">
-      <div class='progress'>
-        <button type="button" class='btn-control' onclick="togglePlay()">
-          <span class='play-text'>Play</span>
-          <span class='pause-text'>Pause</span>
-        </button>
-        <input type="range" id='slider-range' value="0" step="1" onmouseover="stopPlay()" onmouseout="togglePlay()" onclick="resetSlider()">
-      </div>
+      <span class='progress-container'>
+        <div class='progress'>
+          <button type="button" class='btn-control' onclick="togglePlay()">
+            <span class='play-text'>Play</span>
+            <span class='pause-text'>Pause</span>
+          </button>
+          <input type="range" id='slider-range' value="0" step="1" onmouseover="stopPlay()" onmouseout="togglePlay()" onclick="resetSlider()">
+        </div>
+      </span>
     </div>
   </div>
 

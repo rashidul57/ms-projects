@@ -1,4 +1,4 @@
-let selectedProperty, percentType, covid_data, dataSource, worldMapData, selectedMode;
+let selectedProperty, percentType, covid_data, dataSource, chartType, worldMapData, selectedMode;
 let mappedCovidData;
 const prop_fields = ['total_cases', 'new_cases', 'new_deaths', 'people_vaccinated', 'total_deaths', 'weekly_cases', 'weekly_deaths', 'biweekly_cases', 'biweekly_deaths'].map(field => {
     const label = _.startCase(field.split('_').join(' '));
@@ -42,8 +42,6 @@ function load_options() {
     
     d3.select("#drp-mode").on("change", function(d) {
         selectedMode = d3.select(this).property("value");
-        d3.selectAll('.container-box .item').style("display", "none");
-        d3.select('.' + selectedMode).style("display", "inline-block");
         update_ui();
     });
 
@@ -105,9 +103,34 @@ function load_options() {
             update_ui();
         });
     });
+
+    // Data sources
+    const chart_options = [
+        {name: 'bar', label: 'Bar Chart'},
+        {name: 'area', label: 'Area Chart'},
+        {name: 'scatter', label: 'Scatter Chart'}
+    ];
+    chartType = chart_options[0].name;
+    d3.select("#drp-chart-type")
+    .selectAll('data-chart-type')
+    .data(chart_options)
+    .enter()
+    .append('option')
+    .text((d) => { return d.label; })
+    .attr("value", (d) => { return d.name; });
+    
+    d3.select("#drp-chart-type").on("change", function(d) {
+        const value = d3.select(this).property("value");
+        chartType = chart_options.find(opt => opt.name === value).name;
+        update_ui();
+    });
 }
 
 function update_ui() {
+    // Container [map, chart, table] show/hide
+    d3.selectAll('.container-box .item, .chart-option').style("display", "none");
+    d3.selectAll('.' + selectedMode + ', .hide-for-chart').style("display", "inline-block");
+    
     switch (selectedMode) {
         case 'world-map':
             draw_world_map();
@@ -116,6 +139,8 @@ function update_ui() {
             // draw_chart();
             break;
         case 'chart':
+            d3.selectAll('.chart-option').style("display", "inline-block");
+            d3.selectAll(".hide-for-chart").style("display", "none");
             draw_chart();
             break;
     }

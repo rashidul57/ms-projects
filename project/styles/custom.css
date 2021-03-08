@@ -24,9 +24,13 @@ body {
     height: 700px;
     width: 1000px;
 }
+.table{
+    display: none;
+}
 .chart{
     height: calc(100% - 100px);
     width: 100%;
+    display: none;
 }
 .chart input{
     width: calc(100% - 30px);

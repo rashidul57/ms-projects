@@ -16,7 +16,7 @@ window.onload = function () {
         return load_covid_data();
     })
    .then(() => {
-        draw_world_map();
+        update_ui();
     });
 }
 
@@ -38,22 +38,13 @@ function load_options() {
     .append('option')
     .text((d) => { return d.label; })
     .attr("value", (d) => { return d.name; });
+    selectedMode = modes[0].name;
     
     d3.select("#drp-mode").on("change", function(d) {
-        const selectedMode = d3.select(this).property("value");
+        selectedMode = d3.select(this).property("value");
         d3.selectAll('.container-box .item').style("display", "none");
         d3.select('.' + selectedMode).style("display", "inline-block");
-        switch (selectedMode) {
-            case 'world-map':
-                draw_world_map();
-                break;
-            case 'table':
-                // draw_chart();
-                break;
-            case 'chart':
-                draw_chart();
-                break;
-        }
+        update_ui();
     });
 
     selectedProperty = prop_fields[0];
@@ -68,7 +59,7 @@ function load_options() {
     d3.select("#drp-property").on("change", function(d) {
         const property = d3.select(this).property("value");
         selectedProperty = prop_fields.find(opt => opt.name === property);
-        draw_world_map();
+        update_ui();
     });
 
     // 
@@ -88,7 +79,7 @@ function load_options() {
     d3.select("#drp-percent-type").on("change", function(d) {
         const property = d3.select(this).property("value");
         percentType = percent_options.find(opt => opt.name === property).name;
-        draw_world_map();
+        update_ui();
     });
 
     // Data sources
@@ -111,9 +102,23 @@ function load_options() {
         const property = d3.select(this).property("value");
         dataSource = data_src_options.find(opt => opt.name === property).name;
         load_covid_data().then(() => {
-            draw_world_map();
+            update_ui();
         });
     });
+}
+
+function update_ui() {
+    switch (selectedMode) {
+        case 'world-map':
+            draw_world_map();
+            break;
+        case 'table':
+            // draw_chart();
+            break;
+        case 'chart':
+            draw_chart();
+            break;
+    }
 }
 
 async function load_covid_data() {
@@ -122,6 +127,12 @@ async function load_covid_data() {
     total_cases = _.reduce(covid_data, (sum, item) => {
         return sum += Number(item.total_cases || 0);
     }, 0);
+
+    if (!mappedCovidData && covid_data.columns.indexOf('population') === -1) {
+        let populationUrl = `./data/owid/full_data.csv`;
+        const population_data = await d3.csv(populationUrl);
+        mappedCovidData = _.keyBy(population_data, 'location');
+    }
 
     covid_data = _.map(covid_data, (record) => {
         const year = new Date(record['last_updated_date']).getFullYear();

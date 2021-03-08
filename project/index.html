@@ -41,7 +41,15 @@
   <div class='container-box'>
     <div class="world-map item"></div>
     <div class="table item">Table</div>
-    <div class="chart item"></div>
+    <div class="chart item">
+      <div class='progress'>
+        <button type="button" class='btn-control' onclick="togglePlay()">
+          <span class='play-text'>Play</span>
+          <span class='pause-text'>Pause</span>
+        </button>
+        <input type="range" id='range' value="0" step="1">
+      </div>
+    </div>
   </div>
 
 </body>

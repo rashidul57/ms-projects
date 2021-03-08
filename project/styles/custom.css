@@ -28,6 +28,57 @@ body {
     height: calc(100% - 100px);
     width: 100%;
 }
+.chart input{
+    width: calc(100% - 30px);
+    margin-left: 15px;
+    margin-top: 40px;
+    appearance: slider-horizontal;
+    color: -internal-light-dark(rgb(16, 16, 16), rgb(255, 255, 255));
+    cursor: default;
+    padding: initial;
+    border: initial;
+    margin: 2px;
+}
+
+.pause-text{
+    display: none;
+}
+.progress{
+    display: grid;
+    grid-template-columns: 50px calc(100% - 50px);
+    margin-top: 15px;
+    margin-left: 15px;
+}
+
+.btn-control{
+    padding: 0;
+}
+
+.progress input{
+    appearance: auto;
+    -webkit-writing-mode: horizontal-tb !important;
+    text-rendering: auto;
+    color: -internal-light-dark(black, white);
+    letter-spacing: normal;
+    word-spacing: normal;
+    text-transform: none;
+    text-indent: 0px;
+    text-shadow: none;
+    display: inline-block;
+    text-align: center;
+    align-items: flex-start;
+    cursor: default;
+    background-color: -internal-light-dark(rgb(239, 239, 239), rgb(59, 59, 59));
+    box-sizing: border-box;
+    margin: 0em;
+    font: 400 13.3333px Arial;
+    padding: 1px 6px;
+    border-width: 2px;
+    border-style: outset;
+    border-color: -internal-light-dark(rgb(118, 118, 118), rgb(133, 133, 133));
+    border-image: initial;
+}
+
 .country {
     stroke-width: 1;
     stroke: darkslategrey;

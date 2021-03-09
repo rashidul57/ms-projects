@@ -108,6 +108,7 @@ function load_options() {
     const chart_options = [
         {name: 'bar', label: 'Bar Chart'},
         {name: 'area', label: 'Area Chart'},
+        {name: 'tree', label: 'Tree Chart'},
         {name: 'scatter', label: 'Scatter Chart'}
     ];
     chartType = chart_options[0].name;

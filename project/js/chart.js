@@ -17,6 +17,7 @@ async function draw_chart() {
         };
     });
 
+    d3.select(".chart").selectAll("svg").remove();
     switch (chartType) {
         case "bar":
         d3.selectAll(".chart .progress-container").style("display", "inline-block");
@@ -25,97 +26,115 @@ async function draw_chart() {
         break;
 
         case "area":
+        case "tree":
         playing = false;
         clearInterval(playCtlIntval);
         setTimeout(() => {
             d3.selectAll(".chart .progress-container").style("display", "none");
-            d3.select(".chart").selectAll("svg").remove();
-            draw_area_chart();
+            if (chartType === 'area') {
+                draw_area_chart();
+            } else {
+                draw_tree_chart();
+            }
         }, 500);
         break;
     }
+}
 
+
+function draw_tree_chart() {
+    
 }
 
 // Area chart section
 function draw_area_chart() {
-    // set the dimensions and margins of the graph
-    var margin = {top: 20, right: 20, bottom: 30, left: 80},
-    width = 1000 - margin.left - margin.right,
-    height = 700 - margin.top - margin.bottom;
+    // https://observablehq.com/d/78b66425ae803199
+    const height = 700;
+    const width = 1000;
+    margin = ({top: 20, right: 20, bottom: 30, left: 70});
 
-    // set the ranges
-    var x = d3.scaleTime().range([0, width]);
-    var y = d3.scaleLinear().range([height, 0]);
-
-    // define the area
-    var	area = d3.area()	
-    .x(function(d) { return x(d.date); })	
-    .y0(height)					
-    .y1(function(d) { return y(d.count); });
-
-    var svg = d3.select(".chart").append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-    .attr("transform",
-        "translate(" + margin.left + "," + margin.top + ")");
-
-    // format the data
-    chartData.forEach(function(d) {
-        d.date = new Date(d.date);
-        d.count = +d.count;
+    const data = chartData.map(d => {
+        return { date : new Date(d.date), value : d.count }
     });
 
-    // Scale the range of the data
-    x.domain(d3.extent(chartData, function(d) { return d.date; }));
-    y.domain([0, d3.max(chartData, function(d) { return d.count; })]);
+    x = d3.scaleUtc()
+    .domain(d3.extent(data, d => d.date))
+    .range([margin.left, width - margin.right])
 
-    // set the gradient
-    svg.append("linearGradient")				
-    .attr("id", "area-gradient")			
-    .attr("gradientUnits", "userSpaceOnUse")	
-    .attr("x1", 0)
-    .attr("y1", y(0))			
-    .attr("x2", 0)
-    .attr("y2", y(1000))		
-    .selectAll("stop")						
-    .data([								
-        {offset: "0%", color: "red"},		
-        {offset: "30%", color: "red"},	
-        {offset: "45%", color: "black"},		
-        {offset: "55%", color: "black"},		
-        {offset: "60%", color: "lawngreen"},	
-        {offset: "100%", color: "lawngreen"}	
-    ])					
-    .enter().append("stop")			
-    .attr("offset", function(d) { return d.offset; })	
-    .attr("stop-color", function(d) { return d.color; });
+    y = d3.scaleLinear()
+    .domain([0, d3.max(data, d => d.value)]).nice()
+    .range([height - margin.bottom, margin.top])
 
-    // Add the area.
-    svg.append("path")
-    .data([chartData])
-    .attr("class", "area")
-    .attr("d", area);
+    xAxis = (g, x) => g
+    .attr("transform", `translate(0,${height - margin.bottom})`)
+    .call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0))
 
-    // Add the X Axis
+    yAxis = (g, y) => g
+    .attr("transform", `translate(${margin.left},0)`)
+    .call(d3.axisLeft(y).ticks(null, "s"))
+    .call(g => g.select(".domain").remove())
+    .call(g => g.select(".tick:last-of-type text").clone()
+        .attr("x", 3)
+        .attr("text-anchor", "start")
+        .attr("font-weight", "bold")
+        .text(data.y))
+
+    area = (data, x) => d3.area()
+        .curve(d3.curveStepAfter)
+        .x(d => x(d.date))
+        .y0(y(0))
+        .y1(d => y(d.value))
+      (data)
+
+    const zoom = d3.zoom()
+      .scaleExtent([1, 32])
+      .extent([[margin.left, 0], [width - margin.right, height]])
+      .translateExtent([[margin.left, -Infinity], [width - margin.right, Infinity]])
+      .on("zoom", zoomed);
+
+    const svg = d3.select('.chart').append("svg")
+        .attr("viewBox", [0, 0, width, height]);
+
+    var clip = svg.append("defs").append("svg:clipPath")
+        .attr("id", "clip")
+        .append("svg:rect")
+        .attr("width", width )
+        .attr("height", height )
+        .attr("x", margin.left)
+        .attr("y", 0);
+
+    svg.append("clipPath")
+        .attr("id", clip.id)
+        .append("rect")
+        .attr("x", margin.left)
+        .attr("y", margin.top)
+        .attr("width", width - margin.left - margin.right)
+        .attr("height", height - margin.top - margin.bottom);
+
+    const path = svg.append("path")
+        .attr("clip-path", "url(#clip)")
+        .attr("fill", "steelblue")
+        .attr("d", area(data, x));
+
+    const gx = svg.append("g")
+        .call(xAxis, x);
+
     svg.append("g")
-    .attr("transform", "translate(0," + height + ")")
-    .call(d3.axisBottom(x));
+        .call(yAxis, y);
 
-    // Add the Y Axis
-    svg.append("g")
-    .call(d3.axisLeft(y));
+    svg.call(zoom)
+        .transition()
+        .duration(1000)
+        .call(zoom.scaleTo, 0, [x(Date.UTC(2001, 8, 1)), 0]);
 
-    let zoom = d3.zoom()
-    .scaleExtent([1, 10])
-    .translateExtent([[-500,-300], [1500, 1000]])
-    .on('zoom', (event) => {
-        svg.attr('transform', event.transform)
-    });
+    function zoomed(event) {
+        const xz = event.transform.rescaleX(x);
+        path.attr("d", area(data, xz));
+        gx.call(xAxis, xz);
+    }
 
+    return svg.node();
 
-    svg.call(zoom);
 }
 
 
@@ -149,7 +168,7 @@ function draw_bar_chart() {
 }
 
 function resetSlider() {
-    start = parseInt(Number(document.getElementById('slider-range').value)) * 9/2.1;
+    start = parseInt(Number(document.getElementById('slider-range').value) * 9/2.1);
 }
 
 function stopPlay() {
@@ -179,10 +198,9 @@ function togglePlay() {
                     start = 0;
                 }
                 document.getElementById('slider-range').value = start*100/chartData.length;
-
-                const text = chartData[start] && start > 22 && start < 800 ? chartData[start].date : '';
+                const text = chartData[start] && start > 22 && start < 415 ? chartData[start].date : '';
                 d3.select('.current-date')
-                    .attr('x', (start*2) + 60)
+                    .attr('x', (start*2.1 + 50))
                     .text(text);
             }
         }, 100);

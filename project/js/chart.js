@@ -4,20 +4,18 @@ let start = 0;
 let playCtlIntval, chartData;
 
 async function draw_chart() {
-    if (!chartData) {
-        let covidCsv = `./data/${dataSource}/full_data.csv`;
-        const csv_data = await d3.csv(covidCsv);
-        const grouped_data = _.groupBy(csv_data, 'date');
-        chartData = _.map(grouped_data, (items, date) => {
-            const count = _.reduce(items, (sum, item) => {
-                return sum += Number(item[selectedProperty.name] || 0);
-            }, 0);
-            return {
-                date,
-                count
-            };
-        });
-    }
+    let covidCsv = `./data/${dataSource}/full_data.csv`;
+    const csv_data = await d3.csv(covidCsv);
+    const grouped_data = _.groupBy(csv_data, 'date');
+    chartData = _.map(grouped_data, (items, date) => {
+        const count = _.reduce(items, (sum, item) => {
+            return sum += Number(item[selectedProperty.name] || 0);
+        }, 0);
+        return {
+            date,
+            count
+        };
+    });
 
     switch (chartType) {
         case "bar":
@@ -42,12 +40,9 @@ async function draw_chart() {
 // Area chart section
 function draw_area_chart() {
     // set the dimensions and margins of the graph
-    var margin = {top: 20, right: 20, bottom: 30, left: 50},
-    width = 960 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom;
-
-    // parse the date / time
-    var parseTime = d3.timeParse("%d-%b-%y");
+    var margin = {top: 20, right: 20, bottom: 30, left: 80},
+    width = 1000 - margin.left - margin.right,
+    height = 700 - margin.top - margin.bottom;
 
     // set the ranges
     var x = d3.scaleTime().range([0, width]);
@@ -59,9 +54,6 @@ function draw_area_chart() {
     .y0(height)					
     .y1(function(d) { return y(d.count); });
 
-    // append the svg obgect to the body of the page
-    // appends a 'group' element to 'svg'
-    // moves the 'group' element to the top left margin
     var svg = d3.select(".chart").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
@@ -69,36 +61,32 @@ function draw_area_chart() {
     .attr("transform",
         "translate(" + margin.left + "," + margin.top + ")");
 
-        
-
-    // Get the data
-    // d3.csv("./data.csv").then(function(data) {
-    data = chartData;
-
     // format the data
-    data.forEach(function(d) {
+    chartData.forEach(function(d) {
         d.date = new Date(d.date);
         d.count = +d.count;
     });
 
     // Scale the range of the data
-    x.domain(d3.extent(data, function(d) { return d.date; }));
-    y.domain([0, d3.max(data, function(d) { return d.count; })]);
+    x.domain(d3.extent(chartData, function(d) { return d.date; }));
+    y.domain([0, d3.max(chartData, function(d) { return d.count; })]);
 
     // set the gradient
     svg.append("linearGradient")				
     .attr("id", "area-gradient")			
     .attr("gradientUnits", "userSpaceOnUse")	
-    .attr("x1", 0).attr("y1", y(0))			
-    .attr("x2", 0).attr("y2", y(1000))		
+    .attr("x1", 0)
+    .attr("y1", y(0))			
+    .attr("x2", 0)
+    .attr("y2", y(1000))		
     .selectAll("stop")						
     .data([								
-    {offset: "0%", color: "red"},		
-    {offset: "30%", color: "red"},	
-    {offset: "45%", color: "black"},		
-    {offset: "55%", color: "black"},		
-    {offset: "60%", color: "lawngreen"},	
-    {offset: "100%", color: "lawngreen"}	
+        {offset: "0%", color: "red"},		
+        {offset: "30%", color: "red"},	
+        {offset: "45%", color: "black"},		
+        {offset: "55%", color: "black"},		
+        {offset: "60%", color: "lawngreen"},	
+        {offset: "100%", color: "lawngreen"}	
     ])					
     .enter().append("stop")			
     .attr("offset", function(d) { return d.offset; })	
@@ -106,7 +94,7 @@ function draw_area_chart() {
 
     // Add the area.
     svg.append("path")
-    .data([data])
+    .data([chartData])
     .attr("class", "area")
     .attr("d", area);
 
@@ -118,7 +106,6 @@ function draw_area_chart() {
     // Add the Y Axis
     svg.append("g")
     .call(d3.axisLeft(y));
-    // });
 
     let zoom = d3.zoom()
     .scaleExtent([1, 10])

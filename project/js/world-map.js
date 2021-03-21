@@ -87,8 +87,8 @@ function fill_country(d, action) {
             return sum += Number(item[selectedProperty.name] || 0);
         }, 0);
     }
-    const count = Number(d[selectedProperty.name] || 0);
-    perc = count * 100 / Number(total);
+    count = Number(d[selectedProperty.name] || 0);
+    let perc = count * 100 / Number(total);
     perc = perc > 1 ? 1 : perc;
     const factor = action === 'over' ? 0.6 : 1;
     perc = perc * factor;

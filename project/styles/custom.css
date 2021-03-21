@@ -44,6 +44,11 @@ body {
     margin: 2px;
 }
 
+.tree-chart rect {
+    stroke-width: 0.5px;
+    stroke: #958d8d;
+}
+
 .pause-text{
     display: none;
 }

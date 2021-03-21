@@ -63,7 +63,7 @@ function load_options() {
     // 
     const percent_options = [
         {name: 'population', label: 'Country Population'},
-        {name: 'total_count', label: 'Total Occurance'}
+        {name: 'total_count', label: 'Total Occurrence'}
     ];
     percentType = percent_options[0].name;
     d3.select("#drp-percent-type")

@@ -1,4 +1,5 @@
 let sortInfo, table_data, tableFields;
+const filter_params = {field: undefined, start: undefined, end: undefined};
 
 async function draw_table() {
     dataSource = 'jhu';
@@ -13,6 +14,9 @@ async function draw_table() {
     tableFields.push({name: 'perc_vaccinated', label: '% Vaccinated'});
     tableFields.push({name: 'perc_infected', label: '% Infected'});
     tableFields.push({name: 'perc_death', label: '% Death'});
+    
+    load_filter_options();
+    
     if (!sortInfo) {
       set_sort_info(tableFields[0]);
     }
@@ -32,7 +36,6 @@ async function draw_table() {
             [field.name]: field.label
         });
     });
-
     
     table_data = covid_data
       .filter(item => Object.keys(item).length)
@@ -48,6 +51,52 @@ async function draw_table() {
       });
     table_data.unshift(header);
     refresh_table(table_data, header);
+}
+
+function load_filter_options() {
+    d3.select("#drp-table-fields option").remove();
+
+    const filter_fields = tableFields.filter(field => field.name !== 'country');
+    d3.select("#drp-table-fields")
+    .selectAll('table-filter-fields')
+    .data(filter_fields)
+    .enter()
+    .append('option')
+    .text((d) => { return d.label; })
+    .attr("value", (d) => { return d.name; });
+
+    d3.selectAll(".btn-apply-filter, .btn-clear-filter")
+    .on("click", function(ev) {
+        const clear = ev.target.className.indexOf('clear') > -1;
+        apply_filter(clear);
+    });
+
+    d3.selectAll("#range-start, #range-end, #drp-table-fields")
+    .on("change", function(ev, d) {
+        let start = d3.select("#range-start").property("value");
+        start = start ? Number(start) : undefined;
+        let end = d3.select("#range-end").property("value");
+        end = end ? Number(end) : undefined;
+        const field = d3.select("#drp-table-fields").property("value");
+        Object.assign(filter_params, {start, end, field});
+    });
+}
+
+function apply_filter(clear) {
+    const header = table_data[0];
+    let data = table_data;
+    if (!clear && filter_params.start !== undefined && filter_params.end !== undefined && filter_params.field) {
+      const t_data = _.cloneDeep(table_data);
+      data = t_data.splice(1);
+      const f_name = filter_params.field;
+      data = data.filter(item => {
+          let value = Number((item[f_name] || '').toString().replace('%', ''));
+          return value >= filter_params.start && value <= filter_params.end;
+      });
+      data.unshift(header);
+    }
+    refresh_table(data, header);
+    
 }
 
 function set_sort_info(field) {

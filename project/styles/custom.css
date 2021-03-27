@@ -9,6 +9,13 @@
 .toolbar .option .caption{
     font-size: 14px;
 }
+.toolbar .table-filter-fields, .toolbar .table-filter-range{
+    display: none;
+    font-size: 13px;
+}
+.toolbar item.table-filter-range {
+    font-size: 14px;
+}
 
 body {
     display: flex;

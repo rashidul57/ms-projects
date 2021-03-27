@@ -129,7 +129,7 @@ function load_options() {
 
 function update_ui() {
     // Container [map, chart, table] show/hide
-    d3.selectAll('.container-box .item, .chart-option').style("display", "none");
+    d3.selectAll('.item').style("display", "none");
     d3.selectAll('.' + selectedMode + ', .calc-by, .data-source, .field-prop').style("display", "inline-block");
     
     switch (selectedMode) {
@@ -138,6 +138,7 @@ function update_ui() {
             break;
         case 'table':
             d3.selectAll(".calc-by, .data-source, .field-prop").style("display", "none");
+            d3.selectAll(".table-filter-fields, .table-filter-range, .btn-apply-filter, .btn-clear-filter").style("display", "inline-block");
             draw_table();
             break;
         case 'chart':

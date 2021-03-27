@@ -4,7 +4,8 @@ let start = 0;
 let playCtlIntval, chartData;
 
 async function draw_chart() {
-    let covidCsv = `./data/${dataSource}/full_data.csv`;
+    const src = 'who';
+    let covidCsv = `./data/${src}/full_data.csv`;
     const csv_data = await d3.csv(covidCsv);
     
     if (chartType === 'tree') {
@@ -147,7 +148,7 @@ function draw_tree_chart() {
     redraw_text(root, svg, cur_scale);
 
     let zoom = d3.zoom()
-    .scaleExtent([1, 30])
+    .scaleExtent([1, 50])
     .translateExtent([[-1500,-1000], [1500, 1000]])
     .on('zoom', (event) => {
         svg.attr('transform', event.transform)
@@ -155,7 +156,6 @@ function draw_tree_chart() {
         redraw_text(root, svg, cur_scale)
     });
     d3.select(".chart").call(zoom);
-
 
     function update_tooltip_position(event, tooltip, d) {
         const x = Math.abs(event.pageX) - 50;
@@ -185,7 +185,7 @@ function draw_tree_chart() {
         .append("text")
         .attr('class', 'country-text')
         .attr("x", function(d){ 
-            const text_len = (d.data.code.length/2 * 5/cur_scale);
+            const text_len = d.data.code ? (d.data.code.length/2 * 5/cur_scale) : 0;
             let x = d.x0+ (d.x1 - d.x0)/2 - text_len;
             x = x < 10 ? 10 : x;
             
@@ -215,7 +215,7 @@ function draw_tree_chart() {
             if (cur_scale >= 14 && cur_scale < 17 && d.data.count < 100000) {
                 text = '';
             }
-            if (cur_scale >= 17 && cur_scale < 20 && d.data.count < 50000) {
+            if (cur_scale >= 17 && cur_scale < 45 && d.data.count < 50000) {
                 text = '';
             }
             return text;

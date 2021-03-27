@@ -1,6 +1,6 @@
 let selectedProperty, percentType, covid_data, dataSource, chartType, worldMapData, selectedMode;
 let mappedCovidData;
-const prop_fields = ['total_cases', 'new_cases', 'new_deaths', 'people_vaccinated', 'total_deaths', 'weekly_cases', 'weekly_deaths', 'biweekly_cases', 'biweekly_deaths'].map(field => {
+const prop_fields = ['total_cases', 'vaccinated', 'total_deaths'].map(field => {
     const label = _.startCase(field.split('_').join(' '));
     return {
         name: field,
@@ -28,8 +28,8 @@ async function load_map_topology() {
 function load_options() {
     const modes = [
         {name: 'world-map', label: 'Map'},
-        {name: 'table', label: 'Table'},
-        {name: 'chart', label: 'Chart'}
+        {name: 'chart', label: 'Chart'},
+        {name: 'table', label: 'Table'}
     ];
     d3.select("#drp-mode")
     .selectAll('mode-options')
@@ -130,18 +130,19 @@ function load_options() {
 function update_ui() {
     // Container [map, chart, table] show/hide
     d3.selectAll('.container-box .item, .chart-option').style("display", "none");
-    d3.selectAll('.' + selectedMode + ', .hide-for-chart').style("display", "inline-block");
+    d3.selectAll('.' + selectedMode + ', .calc-by, .data-source, .field-prop').style("display", "inline-block");
     
     switch (selectedMode) {
         case 'world-map':
             draw_world_map();
             break;
         case 'table':
-            // draw_chart();
+            d3.selectAll(".calc-by, .data-source, .field-prop").style("display", "none");
+            draw_table();
             break;
         case 'chart':
             d3.selectAll('.chart-option').style("display", "inline-block");
-            d3.selectAll(".hide-for-chart").style("display", "none");
+            d3.selectAll(".calc-by, .data-source").style("display", "none");
             draw_chart();
             break;
     }
@@ -165,15 +166,16 @@ async function load_covid_data() {
         const total_cases = Number(Number(record['total_cases'] || 0).toFixed(0));
         const population = Number(record.population || (mappedCovidData && mappedCovidData[record.location] && mappedCovidData[record.location].population));
         const code = record.iso_code || (mappedCovidData && mappedCovidData[record.location] && mappedCovidData[record.location].iso_code);
-        return {
+        const rec = {
             ...record,
             country: record['location'],
             population,
             total_cases,
             code,
-            date: record['last_updated_date'],
+            date: record['last_updated_date'] || record['date'],
             year
         };
+        return rec;
     });
     if (!mappedCovidData) {
         mappedCovidData = _.keyBy(covid_data, 'location');
@@ -181,7 +183,8 @@ async function load_covid_data() {
 
     const grouped_data = _.groupBy(covid_data, 'country');
     covid_data = _.map(grouped_data, ((items, country) => {
-        const record = {country, population: items[0].population, code: items[0].code};
+        // const record = {country, population: items[0].population, code: items[0].code};
+        const record = {...items[items.length-1]};
         prop_fields.forEach(field => {
             items.forEach(item => {
                 record[field.name] = Number(item[field.name]) || 0;

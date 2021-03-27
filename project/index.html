@@ -2,6 +2,7 @@
 <head>
   <title>COVID Explorer</title>
   <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <script src="./libs/d3.min.js"></script>
   <script src="./libs/d3-tip.min.js"></script>
   <script src="./libs/topojson.v2.min.js"></script>
@@ -16,6 +17,7 @@
   <script src="./js/init.js"></script>
   <script src="./js/world-map.js"></script>
   <script src="./js/chart.js"></script>
+  <script src="./js/table.js"></script>
   <link rel="stylesheet" type="text/css" href="./styles/custom.css"/>
 </head>
 <body>
@@ -24,15 +26,15 @@
         <span class='caption'>Mode</span>
         <select id="drp-mode"></select>
       </span>
-      <span class='option'>
+      <span class='option field-prop'>
         <span class='caption'>Property</span>
         <select id="drp-property"></select>
       </span>
-      <span class='option hide-for-chart'>
+      <span class='option calc-by'>
         <span class='caption'>By</span>
         <select id="drp-percent-type"></select>
       </span>
-      <span class='option hide-for-chart'>
+      <span class='option data-source'>
         <span class='caption'>Data Source</span>
         <select id="drp-data-source"></select>
       </span>
@@ -44,7 +46,7 @@
 <!--  These styles create the bounding box-->
   <div class='container-box'>
     <div class="world-map item"></div>
-    <div class="table item">Table</div>
+    <table class="table item"></table>
     <div class="chart item">
       <span class='progress-container'>
         <div class='progress'>

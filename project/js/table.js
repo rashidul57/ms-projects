@@ -73,6 +73,7 @@ function load_filter_options() {
 
     d3.selectAll("#range-start, #range-end, #drp-table-fields")
     .on("change", function(ev, d) {
+
         let start = d3.select("#range-start").property("value");
         start = start ? Number(start) : undefined;
         let end = d3.select("#range-end").property("value");

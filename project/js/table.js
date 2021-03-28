@@ -68,7 +68,11 @@ function load_filter_options() {
     d3.selectAll(".btn-apply-filter, .btn-clear-filter")
     .on("click", function(ev) {
         const clear = ev.target.className.indexOf('clear') > -1;
-        apply_filter(clear);
+        if (clear) {
+            d3.selectAll("#range-start, #range-end").property("value", "");
+            Object.assign(filter_params, {start:undefined, end:undefined, field:undefined});
+        }
+        apply_filter();
     });
 
     d3.selectAll("#range-start, #range-end, #drp-table-fields")
@@ -83,17 +87,24 @@ function load_filter_options() {
     });
 }
 
-function apply_filter(clear) {
+function apply_filter() {
     const header = table_data[0];
     let data = table_data;
-    if (!clear && filter_params.start !== undefined && filter_params.end !== undefined && filter_params.field) {
-      const t_data = _.cloneDeep(table_data);
-      data = t_data.splice(1);
-      const f_name = filter_params.field;
-      data = data.filter(item => {
-          let value = Number((item[f_name] || '').toString().replace('%', ''));
-          return value >= filter_params.start && value <= filter_params.end;
-      });
+    if (filter_params.start !== undefined && filter_params.end !== undefined && filter_params.field) {
+        const t_data = _.cloneDeep(table_data);
+        data = t_data.splice(1);
+        const f_name = filter_params.field;
+        data = data.filter(item => {
+            let value = Number((item[f_name] || '').toString().replace('%', ''));
+            return value >= filter_params.start && value <= filter_params.end;
+        });
+        data = _.orderBy(data, [(item) => {
+            let value = item[sortInfo.name] || '';
+            if (value.toString().indexOf('%')) {
+                value = Number(value.toString().replace('%', ''));
+            }
+            return value;
+        }], [sortInfo.order]);
       data.unshift(header);
     }
     refresh_table(data, header);
@@ -112,17 +123,7 @@ function sortTable(d) {
     } else {
         set_sort_info(sort_field);
     }
-    const header = table_data[0];
-    let data = table_data.splice(1);
-    data = _.orderBy(data, [(item) => {
-        let value = item[sortInfo.name] || '';
-        if (value.toString().indexOf('%')) {
-            value = Number(value.toString().replace('%', ''));
-        }
-        return value;
-    }], [sortInfo.order]);
-    table_data = [].concat([header], data);
-    refresh_table(table_data, header);
+    apply_filter();
 }
 
 function refresh_table(table_data, header) {

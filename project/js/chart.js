@@ -1,64 +1,29 @@
 let playing;
 const size = 70;
 let start = 0;
-let playCtlIntval, chartData;
+let playCtlIntval, chartData, progressData;
 
 async function draw_chart() {
+    let start_date, end_date;
     const src = 'who';
     let covidCsv = `./data/${src}/full_data.csv`;
     const csv_data = await d3.csv(covidCsv);
-    if (progressChart) {
-
+    chartData = _.orderBy(csv_data, [(item) => {
+        return new Date(item.date).getTime();
+    }], ['asc']);
+    if (progressChart || chartType === 'bar') {
+        start_date = new Date(chartData[0].date);
+        end_date = new Date(chartData[chartData.length-1].date);
+        const num_of_days = moment(end_date).diff(moment(start_date), 'days');
+        progressData = {start_date, end_date, num_of_days, chartData};
+        start = 1;
     } else if (['tree', 'scatter'].indexOf(chartType) > -1) {
-        const grouped_data = _.groupBy(csv_data, 'location');
-        chartData = _.map(grouped_data, (items, location) => {
-            const count = _.reduce(items, (sum, item) => {
-                return sum += Number(item[selectedProperty.name] || 0);
-            }, 0);
-            return {
-                name: location,
-                count,
-                code: items[0].Country_code
-            };
-        });
+        chartData = get_grouped_data(csv_data, 'location');
     } else {
-        const grouped_data = _.groupBy(csv_data, 'date');
-        chartData = _.map(grouped_data, (items, date) => {
-            const count = _.reduce(items, (sum, item) => {
-                return sum += Number(item[selectedProperty.name] || 0);
-            }, 0);
-            const code = items[0].Country_code;
-            return {
-                name: items[0].location,
-                date,
-                count,
-                code
-            };
-        });
+        chartData = get_grouped_data(csv_data, 'date');
     }
 
     d3.select(".chart").selectAll("svg").remove();
-    // switch (chartType) {
-    //     case "bar":
-    //     d3.selectAll(".chart .progress-container").style("display", "inline-block");
-    //     start = 0;
-    //     draw_bar_chart();
-    //     break;
-
-    //     case "tree":
-    //     case "area":
-    //     playing = false;
-    //     d3.selectAll(".chart .progress-container").style("display", "none");
-    //     clearInterval(playCtlIntval);
-    //     setTimeout(() => {
-    //         if (chartType === 'area') {
-    //             draw_area_chart(chartData);
-    //         } else {
-    //             draw_tree_chart();
-    //         }
-    //     }, 500);
-    //     break;
-    // }
     if (!progressChart && chartType !== 'bar') {
         playing = false;
         clearInterval(playCtlIntval);
@@ -84,10 +49,13 @@ async function draw_chart() {
         .attr("class", "summary-svg")
         .style("display", 'inline-block');
 
+    const sd_format = moment(start_date).format("MMMM Do YYYY");
+    const ed_format = moment(end_date).format("MMMM Do YYYY");
+    
     const summaries = [
-        {name: 'start-date', x: 65, y: 12, text: chartData[0].date},
+        {name: 'start-date', x: 65, y: 12, text: sd_format},
         {name: 'current-date', x: 460, y: 12, text: ''},
-        {name: 'end-date', x: 930, y: 12, text: chartData[chartData.length-1].date}
+        {name: 'end-date', x: 905, y: 12, text: ed_format}
     ];
     const row_g = summary_svg.append('g');
     row_g
@@ -104,6 +72,25 @@ async function draw_chart() {
     togglePlay();
 }
 
+function get_grouped_data(csv_data, group_by) {
+    let grouped_data = _.groupBy(csv_data, group_by);
+    grouped_data = _.map(grouped_data, (items, location) => {
+        const count = _.reduce(items, (sum, item) => {
+            return sum += Number(item[selectedProperty.name] || 0);
+        }, 0);
+        const item = {
+            name: location,
+            count,
+            code: items[0].Country_code
+        };
+        if (group_by === 'date') {
+            item.date = items[0].date;
+        }
+        return item;
+    });
+    return grouped_data;
+}
+
 function togglePlay() {
     playing = !playing;
     if (playing) {
@@ -111,50 +98,42 @@ function togglePlay() {
         d3.select('.btn-control .play-text').style("display", "none");
         playCtlIntval = setInterval(() => {
             if (playing) {
-                const seg_start = chartType === 'bar' ? start : 0;
-                let cov_data = _.filter(chartData, (item, index) => {
-                    return index >= seg_start && index <= (start + size);
+                const {start_date, end_date, num_of_days, chartData} = progressData;
+                const cur_date = moment(start_date).add(start, 'days').toDate();
+                cov_data = _.filter(chartData, (item) => {
+                    return new Date(item.date).getTime() >= start_date.getTime() && new Date(item.date).getTime() <= cur_date.getTime();
                 });
-                if (cov_data.length < size) {
-                    const firstItems = _.take(chartData, size - cov_data.length);
-                    cov_data = cov_data.concat(firstItems);
+                if (['tree', 'scatter'].indexOf(chartType) > -1) {
+                    cov_data = get_grouped_data(cov_data, 'location');
+                } else {
+                    cov_data = get_grouped_data(cov_data, 'date');
                 }
-                // refresh_bar_chart(cov_data);
+
+                if (chartType === 'bar' && cov_data.length > size) {
+                    cov_data = _.takeRight(cov_data, size);
+                }
+
                 switch (chartType) {
                     case "bar":
-                    // d3.selectAll(".chart .progress-container").style("display", "inline-block");
-                    // start = 0;
-                    // draw_bar_chart();
                     refresh_bar_chart(cov_data);
                     break;
-
                     case "tree":
                     draw_tree_chart(cov_data);
                     break;
                     case "area":
                     draw_area_chart(cov_data);
                     break;
-                    // playing = false;
-                    // d3.selectAll(".chart .progress-container").style("display", "none");
-                    // clearInterval(playCtlIntval);
-                    // setTimeout(() => {
-                        // if (chartType === 'area') {
-                        //     // draw_area_chart(chartData);
-                        //     draw_area_chart(cov_data);
-                        // } else {
-                        //     draw_tree_chart(cov_data);
-                        // }
-                    // }, 500);
                     case 'scatter':
                     draw_scatter_chart(cov_data);
                     break;
                 }
+
                 start += 1;
-                if (start > chartData.length) {
+                if (start > num_of_days) {
                     start = 0;
                 }
-                document.getElementById('slider-range').value = start*100/chartData.length;
-                const text = chartData[start] && start > 22 && start < 415 ? chartData[start].date : '';
+                document.getElementById('slider-range').value = start*100/num_of_days;
+                const text = start > 22 && start < 415 ? moment(cur_date).format("MMMM Do YYYY") : '';
                 d3.select('.current-date')
                     .attr('x', (start*2.1 + 50))
                     .text(text);
@@ -167,38 +146,11 @@ function togglePlay() {
     }
 }
 
-function draw_bar_chart() {
-    // d3.select(".chart").select("svg.summary-svg").remove();
-    // const summary_svg = d3.select(".chart")
-    //     .append("svg")
-    //     .attr("width", 1000)
-    //     .attr("height", 35)
-    //     .attr("class", "summary-svg");
-
-    // const summaries = [
-    //     {name: 'start-date', x: 65, y: 12, text: chartData[0].date},
-    //     {name: 'current-date', x: 460, y: 12, text: ''},
-    //     {name: 'end-date', x: 930, y: 12, text: chartData[chartData.length-1].date}
-    // ];
-    // const row_g = summary_svg.append('g');
-    // row_g
-    // .selectAll("text")
-    // .data(summaries)
-    // .enter()
-    // .append('text')
-    // .style('font-size', 12)
-    // .attr("x", (d) => d.x)
-    // .attr('y', (d) => d.y)
-    // .attr("class", (d) => d.name)
-    // .text(d => d.text);
-
-    // togglePlay();
-}
-
 function draw_tree_chart(cov_data) {
     var margin = {top: 10, right: 10, bottom: 10, left: 10},
-    width = 1000 - margin.left - margin.right,
-    height = 700 - margin.top - margin.bottom;
+    width = 1000 - margin.left - margin.right;
+    // height = 700 - margin.top - margin.bottom;
+    const height = progressChart ? 605 : 680;
     let cur_scale = 1;
 
     d3.selectAll('.tree-chart').remove();
@@ -212,11 +164,15 @@ function draw_tree_chart(cov_data) {
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
   // Read data
+    let total_count = 0;
     let data = cov_data.map(item => {
         item.parent = 'root';
+        total_count += item.count || 0;
         return item;
-    })
-    .filter(item => item.count > 10000);
+    });
+    if (total_count > 1000000) {
+        data = data.filter(item => item.count > 10000);
+    }
     data = _.orderBy(data, ['count'], ['desc']);
     data.unshift({name: 'root', parent: '', count: ''})
 
@@ -253,7 +209,7 @@ function draw_tree_chart(cov_data) {
         .append('g')
         .call(tooltip);
 
-    var colorSpace = d3.scaleSequential().domain([data[1].count,data[data.length-1].count])
+    var colorSpace = d3.scaleSequential().domain([data[1].count, data[data.length-1].count])
     .range(["#ff0000", "#f4a2a2"])
 
     // use this information to add rectangles:
@@ -332,29 +288,31 @@ function draw_tree_chart(cov_data) {
         .attr("y", function(d){ return d.y0+ (d.y1 - d.y0)/2})
         .text(function(d){
             let text = d.data.code;
-            if (cur_scale < 2 && d.data.count < 8000000) {
-                text = '';
-            }
-            if (cur_scale >= 2 && cur_scale < 3 && d.data.count < 2000000) {
-                text = '';
-            }
-            if (cur_scale >= 3 && cur_scale < 5 && d.data.count < 1500000) {
-                text = '';
-            }
-            if (cur_scale >= 5 && cur_scale < 7 && d.data.count < 1000000) {
-                text = '';
-            }
-            if (cur_scale >= 7 && cur_scale < 10 && d.data.count < 500000) {
-                text = '';
-            }
-            if (cur_scale >= 10 && cur_scale < 14 && d.data.count < 300000) {
-                text = '';
-            }
-            if (cur_scale >= 14 && cur_scale < 17 && d.data.count < 100000) {
-                text = '';
-            }
-            if (cur_scale >= 17 && cur_scale < 45 && d.data.count < 50000) {
-                text = '';
+            if ((progressChart && total_count > 100000000) || !progressChart) {
+                if (cur_scale < 2 && d.data.count < 8000000) {
+                    text = '';
+                }
+                if (cur_scale >= 2 && cur_scale < 3 && d.data.count < 2000000) {
+                    text = '';
+                }
+                if (cur_scale >= 3 && cur_scale < 5 && d.data.count < 1500000) {
+                    text = '';
+                }
+                if (cur_scale >= 5 && cur_scale < 7 && d.data.count < 1000000) {
+                    text = '';
+                }
+                if (cur_scale >= 7 && cur_scale < 10 && d.data.count < 500000) {
+                    text = '';
+                }
+                if (cur_scale >= 10 && cur_scale < 14 && d.data.count < 300000) {
+                    text = '';
+                }
+                if (cur_scale >= 14 && cur_scale < 17 && d.data.count < 100000) {
+                    text = '';
+                }
+                if (cur_scale >= 17 && cur_scale < 45 && d.data.count < 50000) {
+                    text = '';
+                }
             }
             return text;
         })
@@ -468,25 +426,24 @@ function draw_area_chart(data) {
 function draw_scatter_chart(data) {
     const margin = {top: 20, right: 20, bottom: 20, left: 20},
     width = 1000 - margin.left - margin.right;
-    const height = progressChart ? 600 : 660;
+    const height = progressChart ? 580 : 660;
 
     data = _.orderBy(data, ['count'], ['desc'])
     // const color = d3.scaleOrdinal(data.map(d => d.code), d3.schemeCategory10)
-    var color = d3.scaleOrdinal().domain([data[1].count, data[data.length-1].count])
+    var color = d3.scaleSequential()
+    .domain([data[1].count, data[data.length-1].count])
     .range(["#ff0000", "#f4a2a2"])
 
+    let total_count = 0;
+    cov_data.forEach(item => {
+        total_count += item.count || 0;
+    });
+
     const pack = data => d3.pack()
-    .size([width - 2, height - 2])
-    // .padding(3)
-    (d3.hierarchy({children: data})
-        .sum(d => d.count))
+    .size([width - 2, height - 2])(d3.hierarchy({children: data})
+    .sum(d => d.count))
     const root = pack(data);
-  
-    // const svg = d3.create("svg")
-    //     .attr("viewBox", [0, 0, width, height])
-    //     .attr("font-size", 10)
-    //     .attr("font-family", "sans-serif")
-    //     .attr("text-anchor", "middle");
+
     d3.selectAll('.chart svg.scatter-svg').remove();
     const svg = d3.select('.chart')
         .append("svg")
@@ -498,6 +455,7 @@ function draw_scatter_chart(data) {
 
     const zoom = d3.zoom()
         .scaleExtent([1, 8])
+        .translateExtent([[-500,-300], [1500, 1000]])
         .on("zoom", (event) => {
             svg.attr('transform', event.transform)
             cur_scale = event.transform.k;
@@ -505,53 +463,6 @@ function draw_scatter_chart(data) {
         });
     svg.call(zoom);
 
-
-    // leaf.append("clipPath")
-    //     .attr("id", d => (d.data.code + '-' + d.data.count))
-    //     .append("use")
-    //     .attr("xlink:href", d => d.leafUid.href);
-
-    // let cur_scale;
-    // leaf.append("text")
-    //     .attr("y", 0)
-    //     .attr("x", (d, i, nodes) => {
-    //         return (-d.data.code.length*5) + 'px'; //`${i - d.data.code.length + 0.8}px`;
-    //     })
-    //     .text(d => {
-    //         let text = d.data.code;
-    //         if (cur_scale < 2 && d.data.count < 8000000) {
-    //             text = '';
-    //         }
-    //         if (cur_scale >= 2 && cur_scale < 3 && d.data.count < 2000000) {
-    //             text = '';
-    //         }
-    //         if (cur_scale >= 3 && cur_scale < 5 && d.data.count < 1500000) {
-    //             text = '';
-    //         }
-    //         if (cur_scale >= 5 && cur_scale < 7 && d.data.count < 1000000) {
-    //             text = '';
-    //         }
-    //         if (cur_scale >= 7 && cur_scale < 10 && d.data.count < 500000) {
-    //             text = '';
-    //         }
-    //         if (cur_scale >= 10 && cur_scale < 14 && d.data.count < 300000) {
-    //             text = '';
-    //         }
-    //         if (cur_scale >= 14 && cur_scale < 17 && d.data.count < 100000) {
-    //             text = '';
-    //         }
-    //         if (cur_scale >= 17 && cur_scale < 45 && d.data.count < 50000) {
-    //             text = '';
-    //         }
-    //         return text;
-    //     });
-
-    function zoomed(event) {
-        const {transform} = event;
-        cur_scale = event.transform.k;
-        svg.attr("transform", transform);
-        svg.attr("stroke-width", 1 / transform.k);
-    }
 
     function redraw_bubble_text(root, svg, cur_scale) {
         svg.selectAll(".country-code").remove();
@@ -567,50 +478,38 @@ function draw_scatter_chart(data) {
         .attr("fill-opacity", 0.7)
         .attr("fill", d => color(d.data.count));
 
-        // leaf
-        // .append("circle")
-        // .attr('class', 'country-code')
-        // .attr("x", function(d){ 
-        //     const text_len = d.data.code ? (d.data.code.length/2 * 5/cur_scale) : 0;
-        //     let x = d.x0+ (d.x1 - d.x0)/2 - text_len;
-        //     x = x < 10 ? 10 : x;
-            
-        //     return x;
-        // })
-        // .attr("y", function(d){ return d.y0+ (d.y1 - d.y0)/2})
-        // .attr("fill", d => color(d.data.count))
-        
-
         leaf.append("text")
-        .attr("y", 0)
+        .attr("y", 5)
         .attr("x", (d, i, nodes) => {
-            return (-d.data.code.length*5) + 'px'; //`${i - d.data.code.length + 0.8}px`;
+            return (-d.data.code.length*4) + 'px';
         })
         .text(function(d){
             let text = d.data.code;
-            if (cur_scale < 2 && d.data.count < 8000000) {
-                text = '';
-            }
-            if (cur_scale >= 2 && cur_scale < 3 && d.data.count < 2000000) {
-                text = '';
-            }
-            if (cur_scale >= 3 && cur_scale < 5 && d.data.count < 1500000) {
-                text = '';
-            }
-            if (cur_scale >= 5 && cur_scale < 7 && d.data.count < 1000000) {
-                text = '';
-            }
-            if (cur_scale >= 7 && cur_scale < 10 && d.data.count < 500000) {
-                text = '';
-            }
-            if (cur_scale >= 10 && cur_scale < 14 && d.data.count < 300000) {
-                text = '';
-            }
-            if (cur_scale >= 14 && cur_scale < 17 && d.data.count < 100000) {
-                text = '';
-            }
-            if (cur_scale >= 17 && cur_scale < 45 && d.data.count < 50000) {
-                text = '';
+            if ((progressChart && total_count > 500000000) || !progressChart) {
+                if (cur_scale < 2 && d.data.count < 8000000) {
+                    text = '';
+                }
+                if (cur_scale >= 2 && cur_scale < 3 && d.data.count < 2000000) {
+                    text = '';
+                }
+                if (cur_scale >= 3 && cur_scale < 5 && d.data.count < 1500000) {
+                    text = '';
+                }
+                if (cur_scale >= 5 && cur_scale < 7 && d.data.count < 1000000) {
+                    text = '';
+                }
+                if (cur_scale >= 7 && cur_scale < 10 && d.data.count < 500000) {
+                    text = '';
+                }
+                if (cur_scale >= 10 && cur_scale < 14 && d.data.count < 300000) {
+                    text = '';
+                }
+                if (cur_scale >= 14 && cur_scale < 17 && d.data.count < 100000) {
+                    text = '';
+                }
+                if (cur_scale >= 17 && cur_scale < 45 && d.data.count < 50000) {
+                    text = '';
+                }
             }
             return text;
         })

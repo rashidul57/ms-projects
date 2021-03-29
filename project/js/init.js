@@ -152,7 +152,7 @@ function update_ui() {
                 visibility = 'inline-block';
             }
             const chk_progress_vis = chartType === 'bar' ? 'none' : 'inline-block';
-            d3.selectAll('.progress-mode').style("display", chk_progress_vis);
+            d3.selectAll('.progress-checkbox').style("display", chk_progress_vis);
             d3.selectAll('.progress-container, .summary-svg').style("display", visibility);
             d3.selectAll('.chart-option, .field-prop').style("display", "inline-block");
             d3.selectAll('.chart.item').classed('progress-visible', visibility === 'inline-block');

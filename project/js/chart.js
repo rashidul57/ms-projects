@@ -11,24 +11,59 @@ async function draw_chart() {
     chartData = _.orderBy(csv_data, [(item) => {
         return new Date(item.date).getTime();
     }], ['asc']);
-    if (progressChart || chartType === 'bar') {
+
+    if (progressChart) {
         start_date = new Date(chartData[0].date);
         end_date = new Date(chartData[chartData.length-1].date);
         const num_of_days = moment(end_date).diff(moment(start_date), 'days');
         progressData = {start_date, end_date, num_of_days, chartData};
         start = 1;
-    } else if (['tree', 'scatter'].indexOf(chartType) > -1) {
+    } else if (['bar', 'tree', 'scatter'].indexOf(chartType) > -1) {
         chartData = get_grouped_data(csv_data, 'location');
     } else {
         chartData = get_grouped_data(csv_data, 'date');
     }
 
     d3.select(".chart").selectAll("svg").remove();
-    if (!progressChart && chartType !== 'bar') {
+    if (progressChart) {
+        const summary_svg = d3.select(".chart")
+            .append("svg")
+            .attr("width", 1000)
+            .attr("height", 35)
+            .attr("class", "summary-svg")
+            .style("display", 'inline-block');
+
+        const sd_format = moment(start_date).format("MMMM Do YYYY");
+        const ed_format = moment(end_date).format("MMMM Do YYYY");
+        
+        const summaries = [
+            {name: 'start-date', x: 65, y: 12, text: sd_format},
+            {name: 'current-date', x: 460, y: 12, text: ''},
+            {name: 'end-date', x: 905, y: 12, text: ed_format}
+        ];
+        const row_g = summary_svg.append('g');
+        row_g
+        .selectAll("text")
+        .data(summaries)
+        .enter()
+        .append('text')
+        .style('font-size', 12)
+        .attr("x", (d) => d.x)
+        .attr('y', (d) => d.y)
+        .attr("class", (d) => d.name)
+        .text(d => d.text);
+
+        togglePlay();
+    } else {
         playing = false;
         clearInterval(playCtlIntval);
         setTimeout(() => {
             switch (chartType) {
+                case 'bar':
+                chartData = _.orderBy(chartData, ['count'], ['desc']);
+                chartData = _.take(chartData, 20);
+                refresh_bar_chart(chartData, 'code');
+                break;
                 case "tree":
                 draw_tree_chart(chartData);
                 break;
@@ -39,37 +74,9 @@ async function draw_chart() {
                 draw_scatter_chart(chartData);
             }
         }, 500);
-        return;
     }
 
-    const summary_svg = d3.select(".chart")
-        .append("svg")
-        .attr("width", 1000)
-        .attr("height", 35)
-        .attr("class", "summary-svg")
-        .style("display", 'inline-block');
-
-    const sd_format = moment(start_date).format("MMMM Do YYYY");
-    const ed_format = moment(end_date).format("MMMM Do YYYY");
     
-    const summaries = [
-        {name: 'start-date', x: 65, y: 12, text: sd_format},
-        {name: 'current-date', x: 460, y: 12, text: ''},
-        {name: 'end-date', x: 905, y: 12, text: ed_format}
-    ];
-    const row_g = summary_svg.append('g');
-    row_g
-    .selectAll("text")
-    .data(summaries)
-    .enter()
-    .append('text')
-    .style('font-size', 12)
-    .attr("x", (d) => d.x)
-    .attr('y', (d) => d.y)
-    .attr("class", (d) => d.name)
-    .text(d => d.text);
-
-    togglePlay();
 }
 
 function get_grouped_data(csv_data, group_by) {
@@ -115,7 +122,7 @@ function togglePlay() {
 
                 switch (chartType) {
                     case "bar":
-                    refresh_bar_chart(cov_data);
+                    refresh_bar_chart(cov_data, 'date');
                     break;
                     case "tree":
                     draw_tree_chart(cov_data);
@@ -154,16 +161,16 @@ function draw_tree_chart(cov_data) {
     let cur_scale = 1;
 
     d3.selectAll('.tree-chart').remove();
-  // Append the svg object to the body of the page
-  var svg = d3.select(".chart")
-  .append("svg")
+    // Append the svg object to the body of the page
+    var svg = d3.select(".chart")
+    .append("svg")
     .attr('class', 'tree-chart')
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-  // Read data
+    // Read data
     let total_count = 0;
     let data = cov_data.map(item => {
         item.parent = 'root';
@@ -287,34 +294,7 @@ function draw_tree_chart(cov_data) {
         })
         .attr("y", function(d){ return d.y0+ (d.y1 - d.y0)/2})
         .text(function(d){
-            let text = d.data.code;
-            if ((progressChart && total_count > 100000000) || !progressChart) {
-                if (cur_scale < 2 && d.data.count < 8000000) {
-                    text = '';
-                }
-                if (cur_scale >= 2 && cur_scale < 3 && d.data.count < 2000000) {
-                    text = '';
-                }
-                if (cur_scale >= 3 && cur_scale < 5 && d.data.count < 1500000) {
-                    text = '';
-                }
-                if (cur_scale >= 5 && cur_scale < 7 && d.data.count < 1000000) {
-                    text = '';
-                }
-                if (cur_scale >= 7 && cur_scale < 10 && d.data.count < 500000) {
-                    text = '';
-                }
-                if (cur_scale >= 10 && cur_scale < 14 && d.data.count < 300000) {
-                    text = '';
-                }
-                if (cur_scale >= 14 && cur_scale < 17 && d.data.count < 100000) {
-                    text = '';
-                }
-                if (cur_scale >= 17 && cur_scale < 45 && d.data.count < 50000) {
-                    text = '';
-                }
-            }
-            return text;
+            return get_cell_label(total_count, cur_scale, d);
         })
         .attr("font-size", (d) => {
             let size = 10 / cur_scale;
@@ -327,6 +307,37 @@ function draw_tree_chart(cov_data) {
         });
     }
 
+}
+
+function get_cell_label(total_count, cur_scale, d) {
+    let text = d.data.code;
+    if ((progressChart && total_count > 100000000) || !progressChart) {
+        if (cur_scale < 2 && d.data.count < 8000000) {
+            text = '';
+        }
+        if (cur_scale >= 2 && cur_scale < 3 && d.data.count < 2000000) {
+            text = '';
+        }
+        if (cur_scale >= 3 && cur_scale < 5 && d.data.count < 1500000) {
+            text = '';
+        }
+        if (cur_scale >= 5 && cur_scale < 7 && d.data.count < 1000000) {
+            text = '';
+        }
+        if (cur_scale >= 7 && cur_scale < 10 && d.data.count < 500000) {
+            text = '';
+        }
+        if (cur_scale >= 10 && cur_scale < 14 && d.data.count < 300000) {
+            text = '';
+        }
+        if (cur_scale >= 14 && cur_scale < 17 && d.data.count < 100000) {
+            text = '';
+        }
+        if (cur_scale >= 17 && cur_scale < 45 && d.data.count < 50000) {
+            text = '';
+        }
+    }
+    return text;
 }
 
 
@@ -435,7 +446,7 @@ function draw_scatter_chart(data) {
     .range(["#ff0000", "#f4a2a2"])
 
     let total_count = 0;
-    cov_data.forEach(item => {
+    data.forEach(item => {
         total_count += item.count || 0;
     });
 
@@ -484,34 +495,7 @@ function draw_scatter_chart(data) {
             return (-d.data.code.length*4) + 'px';
         })
         .text(function(d){
-            let text = d.data.code;
-            if ((progressChart && total_count > 500000000) || !progressChart) {
-                if (cur_scale < 2 && d.data.count < 8000000) {
-                    text = '';
-                }
-                if (cur_scale >= 2 && cur_scale < 3 && d.data.count < 2000000) {
-                    text = '';
-                }
-                if (cur_scale >= 3 && cur_scale < 5 && d.data.count < 1500000) {
-                    text = '';
-                }
-                if (cur_scale >= 5 && cur_scale < 7 && d.data.count < 1000000) {
-                    text = '';
-                }
-                if (cur_scale >= 7 && cur_scale < 10 && d.data.count < 500000) {
-                    text = '';
-                }
-                if (cur_scale >= 10 && cur_scale < 14 && d.data.count < 300000) {
-                    text = '';
-                }
-                if (cur_scale >= 14 && cur_scale < 17 && d.data.count < 100000) {
-                    text = '';
-                }
-                if (cur_scale >= 17 && cur_scale < 45 && d.data.count < 50000) {
-                    text = '';
-                }
-            }
-            return text;
+            return get_cell_label(total_count, cur_scale, d);
         })
         .attr("font-size", (d) => {
             let size = 10 / cur_scale;
@@ -538,8 +522,6 @@ function draw_scatter_chart(data) {
 
 
 // Bar chart section
-
-
 function resetSlider() {
     start = parseInt(Number(document.getElementById('slider-range').value) * 9/2.1);
 }
@@ -551,17 +533,17 @@ function stopPlay() {
     d3.select('.btn-control .pause-text').style("display", "none");
 }
 
-function refresh_bar_chart(data) {
-    const margin = {top: 60, right: 20, bottom: 70, left: 70},
+function refresh_bar_chart(data, by_prop) {
+    const margin = {top: 60, right: 20, bottom: 70, left: 90},
     width = 1000 - margin.left - margin.right;
-    let height = 630 - margin.top - margin.bottom;
+    let height = progressChart ? 500 : 600;
 
     // set the ranges
     const x = d3.scaleBand()
-            .range([0, width])
-            .padding(0.1);
-            const y = d3.scaleLinear()
-            .range([height, 0]);
+        .range([0, width])
+        .padding(0.1);
+        const y = d3.scaleLinear()
+        .range([height, 0]);
 
     d3.select(".chart").selectAll("svg.bars-svg").remove();
     const svg = d3.select(".chart")
@@ -579,7 +561,7 @@ function refresh_bar_chart(data) {
 
     //   console.log(d3.max(data, function(d) { return d.count; }))
     // Scale the range of the data in the domains
-    x.domain(data.map(function(d) { return d.date; }));
+    x.domain(data.map(function(d) { return d[by_prop]; }));
     y.domain([0, d3.max(data, function(d) { return d.count; })]);
 
     // append the rectangles for the bar chart
@@ -589,24 +571,60 @@ function refresh_bar_chart(data) {
       .append("rect")
       .attr("class", "bar")
       .attr("fill", "steelblue")
-      .attr("x", function(d) { return x(d.date); })
+      .attr("x", function(d) { return x(d[by_prop]); })
       .attr("width", x.bandwidth())
       .attr("y", function(d) {
           return y(d.count);
        })
-      .attr("height", function(d) { return height - y(d.count); });
+      .attr("height", function(d) { 
+          return height - y(d.count);
+    });
+
+    if (!progressChart) {
+        svg.selectAll(".label")
+        .data(data)
+        .enter()
+        .append("text")
+        .text(function(d){
+            return d.name;
+        })
+        .attr("x", function(d) {
+            const label_len = d.name.length * 8;
+            let label_y = y(d.count);
+            if (label_y < label_len) {
+                label_y = - label_len - 5;
+                d.inside = true;
+            } else {
+                label_y = -label_y + 10;
+            }
+            return label_y;
+        })
+        .attr("y", function(d, i) { 
+            return i * (x.bandwidth() + 4.5) + 30;
+        })
+        .attr('fill', (d) => {
+            return d.inside ? 'white' : 'black';
+        })
+        .attr("transform", "rotate(-90)");
+
+        svg.append('text')
+            .text('Top ' + data.length + ' Countries based on ' + selectedProperty.label)
+            .attr('class', 'top-countries')
+            .attr("x", 200)
+            .attr('y', 10);
+    }
 
     // add the x Axis
     svg.append("g")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x))
-      .selectAll("text")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x))
+        .selectAll("text")
         .style("text-anchor", "end")
         .attr("dx", "-.8em")
         .attr("dy", ".15em")
         .attr("transform", function (d) {
-        return "rotate(-90)";
-    });
+            return "rotate(-90)";
+        });
 
     // add the y Axis
     svg.append("g")

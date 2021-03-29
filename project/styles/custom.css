@@ -51,6 +51,10 @@ body {
     border: initial;
     margin: 2px;
 }
+.top-countries{
+    font-size: 25px;
+    font-weight: bold;
+}
 
 .tree-chart rect {
     stroke-width: 0.5px;

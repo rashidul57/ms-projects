@@ -1,5 +1,8 @@
 
-function draw_world_map() {
+async function draw_world_map() {
+
+    await load_map_data();
+
     const width = 1000;
     const height = 700;
 

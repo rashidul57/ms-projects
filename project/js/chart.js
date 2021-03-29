@@ -7,8 +7,9 @@ async function draw_chart() {
     const src = 'who';
     let covidCsv = `./data/${src}/full_data.csv`;
     const csv_data = await d3.csv(covidCsv);
-    
-    if (chartType === 'tree') {
+    if (progressChart) {
+
+    } else if (['tree', 'scatter'].indexOf(chartType) > -1) {
         const grouped_data = _.groupBy(csv_data, 'location');
         chartData = _.map(grouped_data, (items, location) => {
             const count = _.reduce(items, (sum, item) => {
@@ -26,43 +27,181 @@ async function draw_chart() {
             const count = _.reduce(items, (sum, item) => {
                 return sum += Number(item[selectedProperty.name] || 0);
             }, 0);
+            const code = items[0].Country_code;
             return {
+                name: items[0].location,
                 date,
-                count
+                count,
+                code
             };
         });
     }
 
     d3.select(".chart").selectAll("svg").remove();
-    switch (chartType) {
-        case "bar":
-        d3.selectAll(".chart .progress-container").style("display", "inline-block");
-        start = 0;
-        draw_bar_chart();
-        break;
+    // switch (chartType) {
+    //     case "bar":
+    //     d3.selectAll(".chart .progress-container").style("display", "inline-block");
+    //     start = 0;
+    //     draw_bar_chart();
+    //     break;
 
-        case "area":
-        case "tree":
+    //     case "tree":
+    //     case "area":
+    //     playing = false;
+    //     d3.selectAll(".chart .progress-container").style("display", "none");
+    //     clearInterval(playCtlIntval);
+    //     setTimeout(() => {
+    //         if (chartType === 'area') {
+    //             draw_area_chart(chartData);
+    //         } else {
+    //             draw_tree_chart();
+    //         }
+    //     }, 500);
+    //     break;
+    // }
+    if (!progressChart && chartType !== 'bar') {
         playing = false;
         clearInterval(playCtlIntval);
         setTimeout(() => {
-            d3.selectAll(".chart .progress-container").style("display", "none");
-            if (chartType === 'area') {
-                draw_area_chart();
-            } else {
-                draw_tree_chart();
+            switch (chartType) {
+                case "tree":
+                draw_tree_chart(chartData);
+                break;
+                case "area":
+                draw_area_chart(chartData);
+                break;
+                case "scatter":
+                draw_scatter_chart(chartData);
             }
         }, 500);
-        break;
+        return;
+    }
+
+    const summary_svg = d3.select(".chart")
+        .append("svg")
+        .attr("width", 1000)
+        .attr("height", 35)
+        .attr("class", "summary-svg")
+        .style("display", 'inline-block');
+
+    const summaries = [
+        {name: 'start-date', x: 65, y: 12, text: chartData[0].date},
+        {name: 'current-date', x: 460, y: 12, text: ''},
+        {name: 'end-date', x: 930, y: 12, text: chartData[chartData.length-1].date}
+    ];
+    const row_g = summary_svg.append('g');
+    row_g
+    .selectAll("text")
+    .data(summaries)
+    .enter()
+    .append('text')
+    .style('font-size', 12)
+    .attr("x", (d) => d.x)
+    .attr('y', (d) => d.y)
+    .attr("class", (d) => d.name)
+    .text(d => d.text);
+
+    togglePlay();
+}
+
+function togglePlay() {
+    playing = !playing;
+    if (playing) {
+        d3.select('.btn-control .pause-text').style("display", "inline-block");
+        d3.select('.btn-control .play-text').style("display", "none");
+        playCtlIntval = setInterval(() => {
+            if (playing) {
+                const seg_start = chartType === 'bar' ? start : 0;
+                let cov_data = _.filter(chartData, (item, index) => {
+                    return index >= seg_start && index <= (start + size);
+                });
+                if (cov_data.length < size) {
+                    const firstItems = _.take(chartData, size - cov_data.length);
+                    cov_data = cov_data.concat(firstItems);
+                }
+                // refresh_bar_chart(cov_data);
+                switch (chartType) {
+                    case "bar":
+                    // d3.selectAll(".chart .progress-container").style("display", "inline-block");
+                    // start = 0;
+                    // draw_bar_chart();
+                    refresh_bar_chart(cov_data);
+                    break;
+
+                    case "tree":
+                    draw_tree_chart(cov_data);
+                    break;
+                    case "area":
+                    draw_area_chart(cov_data);
+                    break;
+                    // playing = false;
+                    // d3.selectAll(".chart .progress-container").style("display", "none");
+                    // clearInterval(playCtlIntval);
+                    // setTimeout(() => {
+                        // if (chartType === 'area') {
+                        //     // draw_area_chart(chartData);
+                        //     draw_area_chart(cov_data);
+                        // } else {
+                        //     draw_tree_chart(cov_data);
+                        // }
+                    // }, 500);
+                    case 'scatter':
+                    draw_scatter_chart(cov_data);
+                    break;
+                }
+                start += 1;
+                if (start > chartData.length) {
+                    start = 0;
+                }
+                document.getElementById('slider-range').value = start*100/chartData.length;
+                const text = chartData[start] && start > 22 && start < 415 ? chartData[start].date : '';
+                d3.select('.current-date')
+                    .attr('x', (start*2.1 + 50))
+                    .text(text);
+            }
+        }, 100);
+    } else {
+        d3.select('.btn-control .play-text').style("display", "inline-block");
+        d3.select('.btn-control .pause-text').style("display", "none");
+        clearInterval(playCtlIntval);
     }
 }
 
-function draw_tree_chart() {
+function draw_bar_chart() {
+    // d3.select(".chart").select("svg.summary-svg").remove();
+    // const summary_svg = d3.select(".chart")
+    //     .append("svg")
+    //     .attr("width", 1000)
+    //     .attr("height", 35)
+    //     .attr("class", "summary-svg");
+
+    // const summaries = [
+    //     {name: 'start-date', x: 65, y: 12, text: chartData[0].date},
+    //     {name: 'current-date', x: 460, y: 12, text: ''},
+    //     {name: 'end-date', x: 930, y: 12, text: chartData[chartData.length-1].date}
+    // ];
+    // const row_g = summary_svg.append('g');
+    // row_g
+    // .selectAll("text")
+    // .data(summaries)
+    // .enter()
+    // .append('text')
+    // .style('font-size', 12)
+    // .attr("x", (d) => d.x)
+    // .attr('y', (d) => d.y)
+    // .attr("class", (d) => d.name)
+    // .text(d => d.text);
+
+    // togglePlay();
+}
+
+function draw_tree_chart(cov_data) {
     var margin = {top: 10, right: 10, bottom: 10, left: 10},
     width = 1000 - margin.left - margin.right,
     height = 700 - margin.top - margin.bottom;
     let cur_scale = 1;
 
+    d3.selectAll('.tree-chart').remove();
   // Append the svg object to the body of the page
   var svg = d3.select(".chart")
   .append("svg")
@@ -73,7 +212,7 @@ function draw_tree_chart() {
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
   // Read data
-    let data = chartData.map(item => {
+    let data = cov_data.map(item => {
         item.parent = 'root';
         return item;
     })
@@ -145,7 +284,7 @@ function draw_tree_chart() {
         });;
 
     // and to add the text labels
-    redraw_text(root, svg, cur_scale);
+    redraw_tree_box_text(root, svg, cur_scale);
 
     let zoom = d3.zoom()
     .scaleExtent([1, 50])
@@ -153,7 +292,7 @@ function draw_tree_chart() {
     .on('zoom', (event) => {
         svg.attr('transform', event.transform)
         cur_scale = event.transform.k;
-        redraw_text(root, svg, cur_scale)
+        redraw_tree_box_text(root, svg, cur_scale)
     });
     d3.select(".chart").call(zoom);
 
@@ -165,7 +304,7 @@ function draw_tree_chart() {
     }
 
     function get_color_perc(d) {
-        const total = _.reduce(chartData, (sum, item) => {
+        const total = _.reduce(cov_data, (sum, item) => {
             return sum += Number(item.count || 0);
         }, 0);
         count = Number(d.data.count || 0);
@@ -174,8 +313,7 @@ function draw_tree_chart() {
         return perc;
     }
 
-
-    function redraw_text(root, svg, cur_scale) {
+    function redraw_tree_box_text(root, svg, cur_scale) {
         svg.selectAll(".country-text").remove();
 
         svg
@@ -235,13 +373,13 @@ function draw_tree_chart() {
 
 
 // Area chart section
-function draw_area_chart() {
-    // https://observablehq.com/d/78b66425ae803199
-    const height = 700;
+function draw_area_chart(data) {
+    d3.selectAll('svg.area-svg').remove();
+    const height = (progressChart || chartType === 'bar') ? 620 : 700;
     const width = 1000;
     margin = ({top: 20, right: 20, bottom: 30, left: 70});
 
-    const data = chartData.map(d => {
+    data = data.map(d => {
         return { date : new Date(d.date), value : d.count }
     });
 
@@ -262,10 +400,10 @@ function draw_area_chart() {
     .call(d3.axisLeft(y).ticks(null, "s"))
     .call(g => g.select(".domain").remove())
     .call(g => g.select(".tick:last-of-type text").clone()
-        .attr("x", 3)
-        .attr("text-anchor", "start")
-        .attr("font-weight", "bold")
-        .text(data.y))
+    .attr("x", 3)
+    .attr("text-anchor", "start")
+    .attr("font-weight", "bold")
+    .text(data.y))
 
     area = (data, x) => d3.area()
         .curve(d3.curveStepAfter)
@@ -280,7 +418,9 @@ function draw_area_chart() {
       .translateExtent([[margin.left, -Infinity], [width - margin.right, Infinity]])
       .on("zoom", zoomed);
 
-    const svg = d3.select('.chart').append("svg")
+    const svg = d3.select('.chart')
+        .append("svg")
+        .attr('class', 'area-svg')
         .attr("viewBox", [0, 0, width, height]);
 
     var clip = svg.append("defs").append("svg:clipPath")
@@ -322,38 +462,184 @@ function draw_area_chart() {
     }
 
     return svg.node();
-
 }
+
+// Scatter plot
+function draw_scatter_chart(data) {
+    const margin = {top: 20, right: 20, bottom: 20, left: 20},
+    width = 1000 - margin.left - margin.right;
+    const height = progressChart ? 600 : 660;
+
+    data = _.orderBy(data, ['count'], ['desc'])
+    // const color = d3.scaleOrdinal(data.map(d => d.code), d3.schemeCategory10)
+    var color = d3.scaleOrdinal().domain([data[1].count, data[data.length-1].count])
+    .range(["#ff0000", "#f4a2a2"])
+
+    const pack = data => d3.pack()
+    .size([width - 2, height - 2])
+    // .padding(3)
+    (d3.hierarchy({children: data})
+        .sum(d => d.count))
+    const root = pack(data);
+  
+    // const svg = d3.create("svg")
+    //     .attr("viewBox", [0, 0, width, height])
+    //     .attr("font-size", 10)
+    //     .attr("font-family", "sans-serif")
+    //     .attr("text-anchor", "middle");
+    d3.selectAll('.chart svg.scatter-svg').remove();
+    const svg = d3.select('.chart')
+        .append("svg")
+        .attr('class', 'scatter-svg')
+        .attr("viewBox", [0, 0, width, height]);
+    
+    let cur_scale = 1;
+    redraw_bubble_text(root, svg, cur_scale);
+
+    const zoom = d3.zoom()
+        .scaleExtent([1, 8])
+        .on("zoom", (event) => {
+            svg.attr('transform', event.transform)
+            cur_scale = event.transform.k;
+            redraw_bubble_text(root, svg, cur_scale)
+        });
+    svg.call(zoom);
+
+
+    // leaf.append("clipPath")
+    //     .attr("id", d => (d.data.code + '-' + d.data.count))
+    //     .append("use")
+    //     .attr("xlink:href", d => d.leafUid.href);
+
+    // let cur_scale;
+    // leaf.append("text")
+    //     .attr("y", 0)
+    //     .attr("x", (d, i, nodes) => {
+    //         return (-d.data.code.length*5) + 'px'; //`${i - d.data.code.length + 0.8}px`;
+    //     })
+    //     .text(d => {
+    //         let text = d.data.code;
+    //         if (cur_scale < 2 && d.data.count < 8000000) {
+    //             text = '';
+    //         }
+    //         if (cur_scale >= 2 && cur_scale < 3 && d.data.count < 2000000) {
+    //             text = '';
+    //         }
+    //         if (cur_scale >= 3 && cur_scale < 5 && d.data.count < 1500000) {
+    //             text = '';
+    //         }
+    //         if (cur_scale >= 5 && cur_scale < 7 && d.data.count < 1000000) {
+    //             text = '';
+    //         }
+    //         if (cur_scale >= 7 && cur_scale < 10 && d.data.count < 500000) {
+    //             text = '';
+    //         }
+    //         if (cur_scale >= 10 && cur_scale < 14 && d.data.count < 300000) {
+    //             text = '';
+    //         }
+    //         if (cur_scale >= 14 && cur_scale < 17 && d.data.count < 100000) {
+    //             text = '';
+    //         }
+    //         if (cur_scale >= 17 && cur_scale < 45 && d.data.count < 50000) {
+    //             text = '';
+    //         }
+    //         return text;
+    //     });
+
+    function zoomed(event) {
+        const {transform} = event;
+        cur_scale = event.transform.k;
+        svg.attr("transform", transform);
+        svg.attr("stroke-width", 1 / transform.k);
+    }
+
+    function redraw_bubble_text(root, svg, cur_scale) {
+        svg.selectAll(".country-code").remove();
+
+        const leaf = svg.selectAll("g")
+        .data(root.leaves())
+        .join("g")
+        .attr("transform", d => `translate(${d.x + 1},${d.y + 1})`);
+
+        leaf.append("circle")
+        .attr("id", d => (d.data.code + '-' + d.data.count))
+        .attr("r", d => d.r)
+        .attr("fill-opacity", 0.7)
+        .attr("fill", d => color(d.data.count));
+
+        // leaf
+        // .append("circle")
+        // .attr('class', 'country-code')
+        // .attr("x", function(d){ 
+        //     const text_len = d.data.code ? (d.data.code.length/2 * 5/cur_scale) : 0;
+        //     let x = d.x0+ (d.x1 - d.x0)/2 - text_len;
+        //     x = x < 10 ? 10 : x;
+            
+        //     return x;
+        // })
+        // .attr("y", function(d){ return d.y0+ (d.y1 - d.y0)/2})
+        // .attr("fill", d => color(d.data.count))
+        
+
+        leaf.append("text")
+        .attr("y", 0)
+        .attr("x", (d, i, nodes) => {
+            return (-d.data.code.length*5) + 'px'; //`${i - d.data.code.length + 0.8}px`;
+        })
+        .text(function(d){
+            let text = d.data.code;
+            if (cur_scale < 2 && d.data.count < 8000000) {
+                text = '';
+            }
+            if (cur_scale >= 2 && cur_scale < 3 && d.data.count < 2000000) {
+                text = '';
+            }
+            if (cur_scale >= 3 && cur_scale < 5 && d.data.count < 1500000) {
+                text = '';
+            }
+            if (cur_scale >= 5 && cur_scale < 7 && d.data.count < 1000000) {
+                text = '';
+            }
+            if (cur_scale >= 7 && cur_scale < 10 && d.data.count < 500000) {
+                text = '';
+            }
+            if (cur_scale >= 10 && cur_scale < 14 && d.data.count < 300000) {
+                text = '';
+            }
+            if (cur_scale >= 14 && cur_scale < 17 && d.data.count < 100000) {
+                text = '';
+            }
+            if (cur_scale >= 17 && cur_scale < 45 && d.data.count < 50000) {
+                text = '';
+            }
+            return text;
+        })
+        .attr("font-size", (d) => {
+            let size = 10 / cur_scale;
+            return size + 'px';
+        })
+        .attr("fill", (d) => {
+            const perc = get_color_perc(d);
+            const color = perc <= 0.5 ? 'black' : 'white';
+            return color;
+        });
+    }
+
+    function get_color_perc(d) {
+        const total = _.reduce(data, (sum, item) => {
+            return sum += Number(item.count || 0);
+        }, 0);
+        count = Number(d.data.count || 0);
+        let perc = count * 10 / Number(total);
+        perc = perc > 1 ? 1 : perc;
+        return perc;
+    }
+}
+
 
 
 // Bar chart section
-function draw_bar_chart() {
-    d3.select(".chart").select("svg.summary-svg").remove();
-    const summary_svg = d3.select(".chart")
-        .append("svg")
-        .attr("width", 1000)
-        .attr("height", 35)
-        .attr("class", "summary-svg");
 
-    const summaries = [
-        {name: 'start-date', x: 65, y: 12, text: chartData[0].date},
-        {name: 'current-date', x: 460, y: 12, text: ''},
-        {name: 'end-date', x: 930, y: 12, text: chartData[chartData.length-1].date}
-    ];
-    const row_g = summary_svg.append('g');
-    row_g
-    .selectAll("text")
-    .data(summaries)
-    .enter()
-    .append('text')
-    .style('font-size', 12)
-    .attr("x", (d) => d.x)
-    .attr('y', (d) => d.y)
-    .attr("class", (d) => d.name)
-    .text(d => d.text);
-
-    togglePlay();
-}
 
 function resetSlider() {
     start = parseInt(Number(document.getElementById('slider-range').value) * 9/2.1);
@@ -366,44 +652,10 @@ function stopPlay() {
     d3.select('.btn-control .pause-text').style("display", "none");
 }
 
-function togglePlay() {
-    playing = !playing;
-    if (playing) {
-        d3.select('.btn-control .pause-text').style("display", "inline-block");
-        d3.select('.btn-control .play-text').style("display", "none");
-        playCtlIntval = setInterval(() => {
-            if (playing) {
-                let cov_data = _.filter(chartData, (item, index) => {
-                    return index >= start && index <= (start + size);
-                });
-                if (cov_data.length < size) {
-                    const firstItems = _.take(chartData, size - cov_data.length);
-                    cov_data = cov_data.concat(firstItems);
-                }
-                refresh_bar_chart(cov_data);
-                start += 1;
-                if (start > chartData.length) {
-                    start = 0;
-                }
-                document.getElementById('slider-range').value = start*100/chartData.length;
-                const text = chartData[start] && start > 22 && start < 415 ? chartData[start].date : '';
-                d3.select('.current-date')
-                    .attr('x', (start*2.1 + 50))
-                    .text(text);
-            }
-        }, 100);
-    } else {
-        d3.select('.btn-control .play-text').style("display", "inline-block");
-        d3.select('.btn-control .pause-text').style("display", "none");
-        clearInterval(playCtlIntval);
-    }
-}
-
-
 function refresh_bar_chart(data) {
     const margin = {top: 60, right: 20, bottom: 70, left: 70},
-    width = 1000 - margin.left - margin.right,
-    height = 600 - margin.top - margin.bottom;
+    width = 1000 - margin.left - margin.right;
+    let height = 630 - margin.top - margin.bottom;
 
     // set the ranges
     const x = d3.scaleBand()
@@ -412,7 +664,7 @@ function refresh_bar_chart(data) {
             const y = d3.scaleLinear()
             .range([height, 0]);
 
-    d3.select(".chart").select("svg.bars-svg").remove();
+    d3.select(".chart").selectAll("svg.bars-svg").remove();
     const svg = d3.select(".chart")
         .append("svg")
         .attr("class", "bars-svg")

@@ -1,5 +1,5 @@
 let selectedProperty, percentType, covid_data, dataSource, chartType, worldMapData, selectedMode;
-let mappedCovidData;
+let mappedCovidData, progressChart;
 const prop_fields = ['total_cases', 'vaccinated', 'total_deaths'].map(field => {
     const label = _.startCase(field.split('_').join(' '));
     return {
@@ -8,21 +8,18 @@ const prop_fields = ['total_cases', 'vaccinated', 'total_deaths'].map(field => {
     };
 });
 
-window.onload = function () {
-    load_options();
+window.onload = init;
 
-    load_map_topology()
-    .then(() => {        
-        return load_covid_data();
-    })
-   .then(() => {
-        update_ui();
-    });
+async function init() {
+    load_options();
+    update_ui();
 }
 
-async function load_map_topology() {
+
+async function load_map_data() {
     let worldMapJson = './data/world.geo.json';
     worldMapData = await d3.json(worldMapJson);
+    await load_covid_data();
 }
 
 function load_options() {
@@ -41,6 +38,7 @@ function load_options() {
     selectedMode = modes[0].name;
     
     d3.select("#drp-mode").on("change", function(d) {
+        d3.selectAll('.' + selectedMode + ' svg, tr').remove();
         selectedMode = d3.select(this).property("value");
         update_ui();
     });
@@ -123,6 +121,12 @@ function load_options() {
     d3.select("#drp-chart-type").on("change", function(d) {
         const value = d3.select(this).property("value");
         chartType = chart_options.find(opt => opt.name === value).name;
+        playing = false;
+        update_ui();
+    });
+
+    d3.select("#chk-progress").on("change", function(d) {
+        progressChart = d3.select(this).property('checked');
         update_ui();
     });
 }
@@ -130,10 +134,11 @@ function load_options() {
 function update_ui() {
     // Container [map, chart, table] show/hide
     d3.selectAll('.item').style("display", "none");
-    d3.selectAll('.' + selectedMode + ', .calc-by, .data-source, .field-prop').style("display", "inline-block");
+    d3.selectAll('.' + selectedMode).style("display", "inline-block");
     
     switch (selectedMode) {
         case 'world-map':
+            d3.selectAll(".calc-by, .data-source, .field-prop").style("display", "inline-block");
             draw_world_map();
             break;
         case 'table':
@@ -142,8 +147,15 @@ function update_ui() {
             draw_table();
             break;
         case 'chart':
-            d3.selectAll('.chart-option').style("display", "inline-block");
-            d3.selectAll(".calc-by, .data-source").style("display", "none");
+            let visibility = 'none';
+            if ((progressChart || (!progressChart && chartType === 'bar'))) {
+                visibility = 'inline-block';
+            }
+            const chk_progress_vis = chartType === 'bar' ? 'none' : 'inline-block';
+            d3.selectAll('.progress-mode').style("display", chk_progress_vis);
+            d3.selectAll('.progress-container, .summary-svg').style("display", visibility);
+            d3.selectAll('.chart-option, .field-prop').style("display", "inline-block");
+            d3.selectAll('.chart.item').classed('progress-visible', visibility === 'inline-block');
             draw_chart();
             break;
     }

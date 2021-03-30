@@ -517,7 +517,7 @@ function draw_scatter_chart(data) {
         })
         .on('mousedown', function (d) {
             tooltip.hide()
-        });;
+        });
 
         leaf.append("text")
         .attr("y", 5)
@@ -680,6 +680,7 @@ function draw_lines_chart(csv_data) {
     }], ['desc']);
     country_data = _.take(country_data, 10);
     let chartData = get_grouped_data(csv_data, 'date');
+
     chartData = chartData.map(item => {
         item.count = item.count/country_data.length;
         return item;
@@ -697,10 +698,11 @@ function draw_lines_chart(csv_data) {
 }
 
 function draw_a_line(dataset, country_name, indx) {
+    const mappedData = _.keyBy(dataset, 'date');
     // Init configurations
     let bounds, xScale, yScale, xAccessor, yAccessor, clip;
-    let wrapper = d3.select(".chart svg.lines-chart");
-    let axesExists = wrapper.size() > 0;
+    let svg = d3.select(".chart svg.lines-chart");
+    let axesExists = svg.size() > 0;
     let height = progressChart ? 610 : 680;
     let dimensions = {
         width: 1000,
@@ -712,6 +714,7 @@ function draw_a_line(dataset, country_name, indx) {
             left: 80
         }
     }
+
     if (!axesExists) {
         yAccessor = d => d.count;
         const dateParser = d3.timeParse("%m/%d/%Y");
@@ -722,13 +725,13 @@ function draw_a_line(dataset, country_name, indx) {
         dimensions.boundedHeight = dimensions.height - dimensions.margin.top - dimensions.margin.bottom
 
         // Draw canvas
-        wrapper = d3.select(".chart")
+        svg = d3.select(".chart")
         .append("svg")
         .attr("class", "lines-chart")
         .attr("width", dimensions.width)
         .attr("height", dimensions.height);
 
-        bounds = wrapper.append("g")
+        bounds = svg.append("g")
             .attr("transform", `translate(${
                 dimensions.margin.left
             }, ${
@@ -748,14 +751,6 @@ function draw_a_line(dataset, country_name, indx) {
             .domain(d3.extent(dataset, yAccessor))
             .range([dimensions.boundedHeight, 0])
 
-        // const y_scale_place = yScale(32)
-        // clip.append("rect")
-        //     .attr("class", "freezing")
-        //     .attr("x", 0)
-        //     .attr("width", d3.max([0, dimensions.boundedWidth]))
-        //     .attr("y", y_scale_place)
-        //     .attr("height", d3.max([0, dimensions.boundedHeight - y_scale_place]))
-
         xScale = d3.scaleTime()
             .domain(d3.extent(dataset, xAccessor))
             .range([0, dimensions.boundedWidth])
@@ -768,6 +763,23 @@ function draw_a_line(dataset, country_name, indx) {
         clip = line_chart_state.clip;
     }
 
+    const tooltip = d3.tip().attr('class', 'd3-tip')
+    .html(function (event, d) {
+        const value = (d.data.count || 0).toLocaleString('en-US');
+        const name = d.data.name || 'Greenland';
+        return `<div>
+        <p>Country: <strong>${name}</strong></p>
+        <p>Date: <strong>${d.data.date}</strong></p>
+        <p>${selectedProperty.label}: <strong>${value}</strong></p>
+        </div>`;
+    });
+
+    svg.on('mousedown', function (d) {
+        tooltip.hide()
+    });
+    svg.append('g')
+        .call(tooltip);
+
     // Draw data
     const lineGenerator = d3.line()
         .x(d => xScale(xAccessor(d)))
@@ -776,15 +788,35 @@ function draw_a_line(dataset, country_name, indx) {
 
     const country_colors = ['#6c4242', '#ff1e00', '#00ff0e', '#20BEFF', '#1600ff', '#568f3c', '#00ffd6', '#c4c411', '#212121', '#6e6ae1', '#e929e7'];
     clip.append("path")
-        .attr("class", "line")
-        .attr("d", lineGenerator(dataset))
-        .attr("stroke", country_colors[indx])
-        .style("stroke-dasharray", () => {
-            return country_name === 'Average' ? "3, 3" : "0, 0";
-        })
-        .attr("stroke-width", () => {
-            return country_name === 'Average' ? 3 : 2;
-        });
+    .attr("class", "line")
+    .attr("d", lineGenerator(dataset))
+    .attr("stroke", country_colors[indx])
+    .style("stroke-dasharray", () => {
+        return country_name === 'Average' ? "3, 3" : "0, 0";
+    })
+    .attr("stroke-width", () => {
+        return country_name === 'Average' ? 3 : 2;
+    })
+    .on('mouseover', function (event, d) {
+        const mousePosition = d3.pointer(event);
+        let date = xScale.invert(mousePosition[0]);
+        date = moment(date).format("M/D/YY");
+        const count = mappedData[date] && mappedData[date].count || 0;
+        set_cell_tooltip_position(event, tooltip, {data: {name: country_name, date, count}});
+    })
+    .on('mouseout', function (d) {
+        tooltip.hide();
+    })
+    .on("mousemove", function(event, d){
+        const mousePosition = d3.pointer(event);
+        let date = xScale.invert(mousePosition[0]);
+        date = moment(dt).format("M/D/YY");
+        const count = mappedData[date] && mappedData[date].count || 0;
+        set_cell_tooltip_position(event, tooltip, {data: {name: country_name, date, count}});
+    })
+    .on('mousedown', function (d) {
+        tooltip.hide()
+    });;
 
     clip.append('path')
     .attr("class", "legend-line")
@@ -827,66 +859,9 @@ function draw_a_line(dataset, country_name, indx) {
             .call(xAxisGenerator)
     }
 
-    // Set up interactions
-
-    // const listeningRect = bounds.append("rect")
-    //     .attr("class", "listening-rect")
-    //     .attr("width", dimensions.boundedWidth)
-    //     .attr("height", dimensions.boundedHeight)
-    //     .on("mousemove", onMouseMove)
-    //     .on("mouseleave", onMouseLeave);
-
-    // const tooltip = d3.select("#tooltip")
-    // const tooltipCircle = bounds.append("circle")
-    //     .attr("class", "tooltip-circle")
-    //     .attr("r", 4)
-    //     .attr("stroke", "#af9358")
-    //     .attr("fill", "white")
-    //     .attr("stroke-width", 2)
-    //     .style("opacity", 0);
 
     if (!axesExists) {
         line_chart_state = {bounds, xScale, yScale, xAccessor, yAccessor, clip};
     }
 
-    // function onMouseMove() {
-    //     // const mousePosition = d3.mouse(this)
-    //     const mousePosition = d3.pointer(event, this);
-    //     const hoveredDate = xScale.invert(mousePosition[0])
-
-    //     const getDistanceFromHoveredDate = d => Math.abs(xAccessor(d) - hoveredDate)
-    //     const closestIndex = d3.scan(dataset, (a, b) => (
-    //     getDistanceFromHoveredDate(a) - getDistanceFromHoveredDate(b)
-    //     ))
-    //     const closestDataPoint = dataset[closestIndex]
-
-    //     const closestXValue = xAccessor(closestDataPoint)
-    //     const closestYValue = yAccessor(closestDataPoint)
-
-    //     const formatDate = d3.timeFormat("%B %A %-d, %Y")
-    //     tooltip.select("#date")
-    //         .text(formatDate(closestXValue))
-
-    //     const x = xScale(closestXValue)
-    //     + dimensions.margin.left
-    //     const y = yScale(closestYValue)
-    //     + dimensions.margin.top
-
-    //     tooltip.style("transform", `translate(`
-    //     + `calc( -50% + ${x}px),`
-    //     + `calc(-100% + ${y}px)`
-    //     + `)`)
-
-    //     tooltip.style("opacity", 1)
-
-    //     tooltipCircle
-    //         .attr("cx", xScale(closestXValue))
-    //         .attr("cy", yScale(closestYValue))
-    //         .style("opacity", 1)
-    // }
-
-    // function onMouseLeave() {
-    //     tooltip.style("opacity", 0)
-    //     tooltipCircle.style("opacity", 0)
-    // }
 }

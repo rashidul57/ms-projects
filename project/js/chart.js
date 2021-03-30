@@ -2,6 +2,7 @@ let playing;
 const size = 70;
 let start = 0;
 let playCtlIntval, chartData, progressData;
+let line_chart_state = {};
 
 async function draw_chart() {
     let start_date, end_date;
@@ -20,18 +21,18 @@ async function draw_chart() {
         start = 1;
     } else if (['bar', 'tree', 'scatter'].indexOf(chartType) > -1) {
         chartData = get_grouped_data(csv_data, 'location');
-    } else {
+    } else if (chartType !== 'line') {
         chartData = get_grouped_data(csv_data, 'date');
     }
 
     d3.select(".chart").selectAll("svg").remove();
     if (progressChart) {
         const summary_svg = d3.select(".chart")
-            .append("svg")
-            .attr("width", 1000)
-            .attr("height", 35)
-            .attr("class", "summary-svg")
-            .style("display", 'inline-block');
+        .append("svg")
+        .attr("width", 1000)
+        .attr("height", 35)
+        .attr("class", "summary-svg")
+        .style("display", 'inline-block');
 
         const sd_format = moment(start_date).format("MMMM Do YYYY");
         const ed_format = moment(end_date).format("MMMM Do YYYY");
@@ -72,11 +73,13 @@ async function draw_chart() {
                 break;
                 case "scatter":
                 draw_scatter_chart(chartData);
+                break;
+                case "line":
+                draw_lines_chart(csv_data);
+                break;
             }
         }, 500);
     }
-
-    
 }
 
 function get_grouped_data(csv_data, group_by) {
@@ -112,7 +115,7 @@ function togglePlay() {
                 });
                 if (['tree', 'scatter'].indexOf(chartType) > -1) {
                     cov_data = get_grouped_data(cov_data, 'location');
-                } else {
+                } else if (chartType !== 'line') {
                     cov_data = get_grouped_data(cov_data, 'date');
                 }
 
@@ -133,6 +136,10 @@ function togglePlay() {
                     case 'scatter':
                     draw_scatter_chart(cov_data);
                     break;
+                    case 'line':
+                    console.log(cov_data.length)
+                    draw_lines_chart(cov_data);
+                    break;
                 }
 
                 start += 1;
@@ -145,7 +152,7 @@ function togglePlay() {
                     .attr('x', (start*2.1 + 50))
                     .text(text);
             }
-        }, 100);
+        }, chartType === 'line' ? 700 : 100);
     } else {
         d3.select('.btn-control .play-text').style("display", "inline-block");
         d3.select('.btn-control .pause-text').style("display", "none");
@@ -156,7 +163,6 @@ function togglePlay() {
 function draw_tree_chart(cov_data) {
     var margin = {top: 10, right: 10, bottom: 10, left: 10},
     width = 1000 - margin.left - margin.right;
-    // height = 700 - margin.top - margin.bottom;
     const height = progressChart ? 605 : 680;
     let cur_scale = 1;
 
@@ -185,10 +191,11 @@ function draw_tree_chart(cov_data) {
 
     // stratify the data: reformatting for d3.js
     var root = d3.stratify()
-      .id(function(d) { return d.name; })   // Name of the entity (column name is name in csv)
-      .parentId(function(d) { return d.parent; })   // Name of the parent (column name is parent in csv)
+      .id(function(d) { return d.name; })   
+      .parentId(function(d) { return d.parent; }) 
       (data);
-    root.sum(function(d) { return +d.count })   // Compute the numeric value for each entity
+    // Compute the numeric value for each entity
+    root.sum(function(d) { return +d.count })   
 
     // Then d3.treemap computes the position of each element of the hierarchy
     // The coordinates are added to the root object above
@@ -220,8 +227,7 @@ function draw_tree_chart(cov_data) {
     .range(["#ff0000", "#f4a2a2"])
 
     // use this information to add rectangles:
-    svg
-      .selectAll("rect")
+    svg.selectAll("rect")
       .data(root.leaves())
       .enter()
       .append("rect")
@@ -234,17 +240,17 @@ function draw_tree_chart(cov_data) {
             return colorSpace(d.data.count);
         })
         .on('mouseover', function (event, d) {
-            update_tooltip_position(event, tooltip, d);
+            set_cell_tooltip_position(event, tooltip, d);
         })
         .on('mouseout', function (d) {
             tooltip.hide();
         })
         .on("mousemove", function(event, d){
-            update_tooltip_position(event, tooltip, d);
+            set_cell_tooltip_position(event, tooltip, d);
         })
         .on('mousedown', function (d) {
             tooltip.hide()
-        });;
+        });
 
     // and to add the text labels
     redraw_tree_box_text(root, svg, cur_scale);
@@ -258,23 +264,6 @@ function draw_tree_chart(cov_data) {
         redraw_tree_box_text(root, svg, cur_scale)
     });
     d3.select(".chart").call(zoom);
-
-    function update_tooltip_position(event, tooltip, d) {
-        const x = Math.abs(event.pageX) - 50;
-        let y = Math.abs(event.pageY) + 15;
-        tooltip.show(event, d);
-        $('.d3-tip').css({"left": (x + "px"), "top": (y + "px")});
-    }
-
-    function get_color_perc(d) {
-        const total = _.reduce(cov_data, (sum, item) => {
-            return sum += Number(item.count || 0);
-        }, 0);
-        count = Number(d.data.count || 0);
-        let perc = count * 10 / Number(total);
-        perc = perc > 1 ? 1 : perc;
-        return perc;
-    }
 
     function redraw_tree_box_text(root, svg, cur_scale) {
         svg.selectAll(".country-text").remove();
@@ -301,7 +290,7 @@ function draw_tree_chart(cov_data) {
             return size + 'px';
         })
         .attr("fill", (d) => {
-            const perc = get_color_perc(d);
+            const perc = get_cell_perc_color(d);
             const color = perc <= 0.5 ? 'black' : 'white';
             return color;
         });
@@ -416,8 +405,14 @@ function draw_area_chart(data) {
     const gx = svg.append("g")
         .call(xAxis, x);
 
-    svg.append("g")
+    const gy = svg.append("g")
         .call(yAxis, y);
+    
+    gy.append("g")
+    .attr('class', 'area-y-axis')
+    .attr("x", margin.left)
+    .attr("dx", margin.left)
+    .call(d3.axisLeft(y));
 
     svg.call(zoom)
         .transition()
@@ -428,6 +423,9 @@ function draw_area_chart(data) {
         const xz = event.transform.rescaleX(x);
         path.attr("d", area(data, xz));
         gx.call(xAxis, xz);
+        // const yz = event.transform.rescaleY(y);
+        // path_y.attr("d", area(data, yz));
+        // gy.call(yAxis, yz);
     }
 
     return svg.node();
@@ -440,7 +438,7 @@ function draw_scatter_chart(data) {
     const height = progressChart ? 580 : 660;
 
     data = _.orderBy(data, ['count'], ['desc'])
-    // const color = d3.scaleOrdinal(data.map(d => d.code), d3.schemeCategory10)
+    
     var color = d3.scaleSequential()
     .domain([data[1].count, data[data.length-1].count])
     .range(["#ff0000", "#f4a2a2"])
@@ -460,6 +458,26 @@ function draw_scatter_chart(data) {
         .append("svg")
         .attr('class', 'scatter-svg')
         .attr("viewBox", [0, 0, width, height]);
+
+    
+    const tooltip = d3.tip().attr('class', 'd3-tip')
+    .html(function (event, d) {
+        const value = (d.data.count || 0).toLocaleString('en-US');
+        const name = d.data.name || 'Greenland';
+        return `<div>
+        <p>Country: <strong>${name}</strong></p>
+        <p>${selectedProperty.label}: <strong>${value}</strong></p>
+        </div>`;
+    });
+
+    svg.on('mousedown', function (d) {
+        tooltip.hide()
+    });
+    svg.attr("width", width)
+        .attr("height", height)
+        .style("background", 'ivory')
+        .append('g')
+        .call(tooltip);
     
     let cur_scale = 1;
     redraw_bubble_text(root, svg, cur_scale);
@@ -487,7 +505,19 @@ function draw_scatter_chart(data) {
         .attr("id", d => (d.data.code + '-' + d.data.count))
         .attr("r", d => d.r)
         .attr("fill-opacity", 0.7)
-        .attr("fill", d => color(d.data.count));
+        .attr("fill", d => color(d.data.count))
+        .on('mouseover', function (event, d) {
+            set_cell_tooltip_position(event, tooltip, d);
+        })
+        .on('mouseout', function (d) {
+            tooltip.hide();
+        })
+        .on("mousemove", function(event, d){
+            set_cell_tooltip_position(event, tooltip, d);
+        })
+        .on('mousedown', function (d) {
+            tooltip.hide()
+        });;
 
         leaf.append("text")
         .attr("y", 5)
@@ -502,23 +532,12 @@ function draw_scatter_chart(data) {
             return size + 'px';
         })
         .attr("fill", (d) => {
-            const perc = get_color_perc(d);
+            const perc = get_cell_perc_color(d);
             const color = perc <= 0.5 ? 'black' : 'white';
             return color;
         });
     }
-
-    function get_color_perc(d) {
-        const total = _.reduce(data, (sum, item) => {
-            return sum += Number(item.count || 0);
-        }, 0);
-        count = Number(d.data.count || 0);
-        let perc = count * 10 / Number(total);
-        perc = perc > 1 ? 1 : perc;
-        return perc;
-    }
 }
-
 
 
 // Bar chart section
@@ -629,5 +648,245 @@ function refresh_bar_chart(data, by_prop) {
     // add the y Axis
     svg.append("g")
       .call(d3.axisLeft(y));
+}
 
+function get_cell_perc_color(d) {
+    const total = _.reduce(data, (sum, item) => {
+        return sum += Number(item.count || 0);
+    }, 0);
+    count = Number(d.data.count || 0);
+    let perc = count * 10 / Number(total);
+    perc = perc > 1 ? 1 : perc;
+    return perc;
+}
+
+function set_cell_tooltip_position(event, tooltip, d) {
+    const x = Math.abs(event.pageX) - 50;
+    let y = Math.abs(event.pageY) + 15;
+    tooltip.show(event, d);
+    $('.d3-tip').css({"left": (x + "px"), "top": (y + "px")});
+}
+
+
+// Draw lines chart
+function draw_lines_chart(csv_data) {
+    // clean old content if exists
+    d3.selectAll('.chart svg.lines-chart, .legend-line, .legend-text, .top-countries').remove();
+
+    // Process data 
+    let country_data = get_grouped_data(csv_data, 'location');
+    country_data = _.orderBy(country_data, [(item) => {
+        return item.count;
+    }], ['desc']);
+    country_data = _.take(country_data, 10);
+    let chartData = get_grouped_data(csv_data, 'date');
+    chartData = chartData.map(item => {
+        item.count = item.count/country_data.length;
+        return item;
+    });
+
+    // Draw line for average count
+    draw_a_line(chartData, 'Average', 0);
+
+    // Draw a line for each of top 10 countries
+    country_data.forEach((country, indx) => {
+        let c_data = csv_data.filter(item => item.location === country.name);
+        c_data = get_grouped_data(c_data, 'date');
+        draw_a_line(c_data, country.name, indx+1);
+    });
+}
+
+function draw_a_line(dataset, country_name, indx) {
+    // Init configurations
+    let bounds, xScale, yScale, xAccessor, yAccessor, clip;
+    let wrapper = d3.select(".chart svg.lines-chart");
+    let axesExists = wrapper.size() > 0;
+    let height = progressChart ? 610 : 680;
+    let dimensions = {
+        width: 1000,
+        height: height,
+        margin: {
+            top: 15,
+            right: 25,
+            bottom: 20,
+            left: 80
+        }
+    }
+    if (!axesExists) {
+        yAccessor = d => d.count;
+        const dateParser = d3.timeParse("%m/%d/%Y");
+        xAccessor = d => dateParser(d.date);
+
+        // Create chart dimensions
+        dimensions.boundedWidth = dimensions.width - dimensions.margin.left - dimensions.margin.right
+        dimensions.boundedHeight = dimensions.height - dimensions.margin.top - dimensions.margin.bottom
+
+        // Draw canvas
+        wrapper = d3.select(".chart")
+        .append("svg")
+        .attr("class", "lines-chart")
+        .attr("width", dimensions.width)
+        .attr("height", dimensions.height);
+
+        bounds = wrapper.append("g")
+            .attr("transform", `translate(${
+                dimensions.margin.left
+            }, ${
+                dimensions.margin.top
+            })`)
+
+        bounds.append("defs").append("clipPath")
+            .attr("id", "bounds-clip-path")
+            .append("rect")
+            .attr("width", dimensions.boundedWidth)
+            .attr("height", dimensions.boundedHeight)
+        clip = bounds.append("g")
+            .attr("clip-path", "url(#bounds-clip-path)")
+
+        // Create scales
+        yScale = d3.scaleLinear()
+            .domain(d3.extent(dataset, yAccessor))
+            .range([dimensions.boundedHeight, 0])
+
+        // const y_scale_place = yScale(32)
+        // clip.append("rect")
+        //     .attr("class", "freezing")
+        //     .attr("x", 0)
+        //     .attr("width", d3.max([0, dimensions.boundedWidth]))
+        //     .attr("y", y_scale_place)
+        //     .attr("height", d3.max([0, dimensions.boundedHeight - y_scale_place]))
+
+        xScale = d3.scaleTime()
+            .domain(d3.extent(dataset, xAccessor))
+            .range([0, dimensions.boundedWidth])
+    } else {
+        bounds = line_chart_state.bounds;
+        xScale = line_chart_state.xScale;
+        yScale = line_chart_state.yScale;
+        xAccessor = line_chart_state.xAccessor;
+        yAccessor = line_chart_state.yAccessor;
+        clip = line_chart_state.clip;
+    }
+
+    // Draw data
+    const lineGenerator = d3.line()
+        .x(d => xScale(xAccessor(d)))
+        .y(d => yScale(yAccessor(d)));
+
+
+    const country_colors = ['#6c4242', '#ff1e00', '#00ff0e', '#20BEFF', '#1600ff', '#568f3c', '#00ffd6', '#c4c411', '#212121', '#6e6ae1', '#e929e7'];
+    clip.append("path")
+        .attr("class", "line")
+        .attr("d", lineGenerator(dataset))
+        .attr("stroke", country_colors[indx])
+        .style("stroke-dasharray", () => {
+            return country_name === 'Average' ? "3, 3" : "0, 0";
+        })
+        .attr("stroke-width", () => {
+            return country_name === 'Average' ? 3 : 2;
+        });
+
+    clip.append('path')
+    .attr("class", "legend-line")
+    .style('stroke', country_colors[indx])
+    .attr("stroke-width", 2)
+    .style("stroke-dasharray", () => {
+        return country_name === 'Average' ? "3, 3" : "0, 0";
+    })
+    .attr('d', `M20,${50+indx*22},L60,${50+indx*22}`);
+    
+    clip.append('text')
+    .attr("class", "legend-text")
+    .attr('fill', country_colors[indx])
+    .attr("x", 65)
+    .attr("y", 55+indx*22)
+    .html(country_name);
+
+    // Draw peripherals
+    if (!axesExists) {
+        clip.append('text')
+        .attr("class", "top-countries")
+        .attr('fill', 'Black')
+        .attr("x", 15)
+        .attr("y", 30)
+        .html("Top 10 Countries");
+
+        const yAxisGenerator = d3.axisLeft()
+            .scale(yScale)
+
+        const yAxis = bounds.append("g")
+            .attr("class", "y-axis")
+            .call(yAxisGenerator)
+
+        const xAxisGenerator = d3.axisBottom()
+            .scale(xScale)
+
+        const xAxis = bounds.append("g")
+            .attr("class", "x-axis")
+            .style("transform", `translateY(${dimensions.boundedHeight}px)`)
+            .call(xAxisGenerator)
+    }
+
+    // Set up interactions
+
+    // const listeningRect = bounds.append("rect")
+    //     .attr("class", "listening-rect")
+    //     .attr("width", dimensions.boundedWidth)
+    //     .attr("height", dimensions.boundedHeight)
+    //     .on("mousemove", onMouseMove)
+    //     .on("mouseleave", onMouseLeave);
+
+    // const tooltip = d3.select("#tooltip")
+    // const tooltipCircle = bounds.append("circle")
+    //     .attr("class", "tooltip-circle")
+    //     .attr("r", 4)
+    //     .attr("stroke", "#af9358")
+    //     .attr("fill", "white")
+    //     .attr("stroke-width", 2)
+    //     .style("opacity", 0);
+
+    if (!axesExists) {
+        line_chart_state = {bounds, xScale, yScale, xAccessor, yAccessor, clip};
+    }
+
+    // function onMouseMove() {
+    //     // const mousePosition = d3.mouse(this)
+    //     const mousePosition = d3.pointer(event, this);
+    //     const hoveredDate = xScale.invert(mousePosition[0])
+
+    //     const getDistanceFromHoveredDate = d => Math.abs(xAccessor(d) - hoveredDate)
+    //     const closestIndex = d3.scan(dataset, (a, b) => (
+    //     getDistanceFromHoveredDate(a) - getDistanceFromHoveredDate(b)
+    //     ))
+    //     const closestDataPoint = dataset[closestIndex]
+
+    //     const closestXValue = xAccessor(closestDataPoint)
+    //     const closestYValue = yAccessor(closestDataPoint)
+
+    //     const formatDate = d3.timeFormat("%B %A %-d, %Y")
+    //     tooltip.select("#date")
+    //         .text(formatDate(closestXValue))
+
+    //     const x = xScale(closestXValue)
+    //     + dimensions.margin.left
+    //     const y = yScale(closestYValue)
+    //     + dimensions.margin.top
+
+    //     tooltip.style("transform", `translate(`
+    //     + `calc( -50% + ${x}px),`
+    //     + `calc(-100% + ${y}px)`
+    //     + `)`)
+
+    //     tooltip.style("opacity", 1)
+
+    //     tooltipCircle
+    //         .attr("cx", xScale(closestXValue))
+    //         .attr("cy", yScale(closestYValue))
+    //         .style("opacity", 1)
+    // }
+
+    // function onMouseLeave() {
+    //     tooltip.style("opacity", 0)
+    //     tooltipCircle.style("opacity", 0)
+    // }
 }

@@ -107,7 +107,8 @@ function load_options() {
         {name: 'bar', label: 'Bar Chart'},
         {name: 'area', label: 'Area Chart'},
         {name: 'tree', label: 'Tree Chart'},
-        {name: 'scatter', label: 'Scatter Chart'}
+        {name: 'scatter', label: 'Scatter Chart'},
+        {name: 'line', label: 'Line Chart'}
     ];
     chartType = chart_options[0].name;
     d3.select("#drp-chart-type")

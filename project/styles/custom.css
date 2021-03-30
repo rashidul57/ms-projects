@@ -149,7 +149,11 @@ button:hover {
  .area {							
     fill: url(#area-gradient);					
     stroke-width: 0px;			
-  }
+}
+
+g.area-y-axis text {
+    display: none;
+}
 
   /* table */
   .table{
@@ -185,3 +189,17 @@ button:hover {
     margin-top: 1px;
     cursor: pointer;
   }
+
+
+/* line chart */
+
+.line {
+    fill: none;
+}
+
+.y-axis-label {
+    fill: black;
+    font-size: 1.4em;
+    text-anchor: middle;
+    transform: rotate(-90deg);
+}

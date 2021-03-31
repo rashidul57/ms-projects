@@ -1,7 +1,7 @@
 
 async function draw_world_map() {
 
-    await load_map_data();
+    let covid_data = await load_map_data();
 
     const width = 1000;
     const height = 700;
@@ -42,28 +42,39 @@ async function draw_world_map() {
 
     container.call(zoom);
 
+    const color_range = get_color_range();
+    const min_count = _.minBy(covid_data, selectedProperty.name)[selectedProperty.name];
+    const max_count = _.maxBy(covid_data, selectedProperty.name)[selectedProperty.name];
+
+    let color_space = d3.scaleSequential()
+    .domain([max_count, min_count])
+    .range(color_range);
+
     const render = (path, data) => svg.selectAll()
     .data(data)
     .enter()
     .append('path')
     .attr('d', path)
     .attr('class', 'country')
+    .style('stroke-width', 1)
+    .style('stroke', 'darkslategrey')
     .style('fill', function (d) {
-        return fill_country(d, 'out');
+        const count = d[selectedProperty.name];
+        const color = color_space(count);
+        return color;
     })
     .on('mouseover', function (event, d) {
         d3.select(this)
-        .style('fill', function () {
-            return fill_country(d, 'over');
-        });
-        last_country = d.country;
+        .style('stroke-width', 2)
+        .style('stroke', 'black');
+
         update_tooltip_position(event, tooltip, d);
     })
     .on('mouseout', function (d) {
         d3.select(this)
-        .style('fill', function (d) {
-            return fill_country(d, 'out');
-        });
+        .style('stroke-width', 1)
+        .style('stroke', 'darkslategrey');
+
         tooltip.hide();
     })
     .on("mousemove", function(event, d){

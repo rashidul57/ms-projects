@@ -5,13 +5,20 @@ let playCtlIntval, chartData, progressData;
 let line_chart_state = {};
 const selected_countries = {};
 let top_or_selected = 'Top';
+const date_format = 'Y-M-D';
 
 async function draw_chart() {
     let start_date, end_date;
-    const src = 'who';
-    let covidCsv = `./data/${src}/full_data.csv`;
-    const csv_data = await d3.csv(covidCsv);
+    let csv_data = await load_jhu_data();
+    csv_data = csv_data.filter(item => {
+        return ['World', 'North America', 'Europe', 'Asia', 'Africa', 'European Union', 'South America'].indexOf(item.location) === -1;
+    });
     chartData = _.orderBy(csv_data, [(item) => {
+        if (mapped_owid_data[item.location]) {
+            item.code = mapped_owid_data[item.location].iso_code;
+            item.code = mapped_owid_data[item.location].iso_code;
+            item.vaccinated = parseInt(mapped_owid_data[item.location] && mapped_owid_data[item.location].people_vaccinated || 0);
+        }
         return new Date(item.date).getTime();
     }], ['asc']);
 
@@ -86,17 +93,17 @@ async function draw_chart() {
 
 function get_grouped_data(csv_data, group_by) {
     let grouped_data = _.groupBy(csv_data, group_by);
-    grouped_data = _.map(grouped_data, (items, location) => {
+    grouped_data = _.map(grouped_data, (items, key) => {
         const count = _.reduce(items, (sum, item) => {
             return sum += Number(item[selectedProperty.name] || 0);
         }, 0);
         const item = {
-            name: location,
+            name: key,
             count,
-            code: items[0].Country_code
+            code: items[0].code
         };
-        if (group_by === 'date') {
-            item.date = items[0].date;
+        if (group_by === 'date' && !item.date) {
+            item.date = key;
         }
         return item;
     });
@@ -162,14 +169,14 @@ function togglePlay() {
 }
 
 function draw_tree_chart(cov_data) {
-    var margin = {top: 10, right: 10, bottom: 10, left: 10},
+    let margin = {top: 10, right: 10, bottom: 10, left: 10},
     width = 1000 - margin.left - margin.right;
     const height = progressChart ? 605 : 680;
     let cur_scale = 1;
 
     d3.selectAll('.tree-chart').remove();
     // Append the svg object to the body of the page
-    var svg = d3.select(".chart")
+    let svg = d3.select(".chart")
     .append("svg")
     .attr('class', 'tree-chart')
     .attr("width", width + margin.left + margin.right)
@@ -191,7 +198,7 @@ function draw_tree_chart(cov_data) {
     data.unshift({name: 'root', parent: '', count: ''})
 
     // stratify the data: reformatting for d3.js
-    var root = d3.stratify()
+    let root = d3.stratify()
       .id(function(d) { return d.name; })   
       .parentId(function(d) { return d.parent; }) 
       (data);
@@ -224,8 +231,9 @@ function draw_tree_chart(cov_data) {
         .append('g')
         .call(tooltip);
 
-    var colorSpace = d3.scaleSequential().domain([data[1].count, data[data.length-1].count])
-    .range(["#ff0000", "#f4a2a2"])
+    const color_range = get_color_range();
+    let colorSpace = d3.scaleSequential().domain([data[1].count, data[data.length-1].count])
+    .range(color_range)
 
     // use this information to add rectangles:
     svg.selectAll("rect")
@@ -333,6 +341,9 @@ function get_cell_label(total_count, cur_scale, d) {
 
 // Area chart section
 function draw_area_chart(data) {
+    // sort data by count
+    data = _.orderBy(data, [(item)=> new Date(item.date).getTime()], ['asc']);
+
     d3.selectAll('svg.area-svg').remove();
     const height = (progressChart || chartType === 'bar') ? 620 : 700;
     const width = 1000;
@@ -382,7 +393,7 @@ function draw_area_chart(data) {
         .attr('class', 'area-svg')
         .attr("viewBox", [0, 0, width, height]);
 
-    var clip = svg.append("defs").append("svg:clipPath")
+    let clip = svg.append("defs").append("svg:clipPath")
         .attr("id", "clip")
         .append("svg:rect")
         .attr("width", width )
@@ -432,17 +443,20 @@ function draw_area_chart(data) {
     return svg.node();
 }
 
+
+
 // Scatter plot
 function draw_scatter_chart(data) {
+    // sort data by count
+    data = _.orderBy(data, ['count'], ['desc']);
+
     const margin = {top: 20, right: 20, bottom: 20, left: 20},
     width = 1000 - margin.left - margin.right;
     const height = progressChart ? 580 : 660;
-
-    data = _.orderBy(data, ['count'], ['desc'])
-    
-    var color = d3.scaleSequential()
-    .domain([data[1].count, data[data.length-1].count])
-    .range(["#ff0000", "#f4a2a2"])
+    const color_range = get_color_range();
+    let color_space = d3.scaleSequential()
+    .domain([data[0].count, data[data.length-1].count])
+    .range(color_range);
 
     let total_count = 0;
     data.forEach(item => {
@@ -507,7 +521,7 @@ function draw_scatter_chart(data) {
         .attr("id", d => (d.data.code + '-' + d.data.count))
         .attr("r", d => d.r)
         .attr("fill-opacity", 0.7)
-        .attr("fill", d => color(d.data.count))
+        .attr("fill", d => color_space(d.data.count))
         .on('mouseover', function (event, d) {
             set_cell_tooltip_position(event, tooltip, d);
         })
@@ -580,7 +594,6 @@ function refresh_bar_chart(data, by_prop) {
         d.count = +d.count;
     });
 
-    //   console.log(d3.max(data, function(d) { return d.count; }))
     // Scale the range of the data in the domains
     x.domain(data.map(function(d) { return d[by_prop]; }));
     y.domain([0, d3.max(data, function(d) { return d.count; })]);
@@ -629,7 +642,7 @@ function refresh_bar_chart(data, by_prop) {
         .attr("transform", "rotate(-90)");
 
         svg.append('text')
-            .text('Top ' + data.length + ' Countries based on ' + selectedProperty.label)
+            .text('Top ' + data.length + ' Countries/Areas based on ' + selectedProperty.label)
             .attr('class', 'top-countries')
             .attr("x", 200)
             .attr('y', 10);
@@ -666,7 +679,7 @@ function set_cell_tooltip_position(event, tooltip, d) {
     let x = Math.abs(event.pageX) - 50;
     let y = Math.abs(event.pageY) + 15;
     if (y > 620) {
-        y = 620;
+        y = 600;
         if (x > 500) {
             x -= 150;
         } else {
@@ -737,12 +750,14 @@ function draw_lines_chart(csv_data) {
     } else {
         country_data = country_data.filter(item => selected_countries[item.name]);
     }
-    let lines_data = get_grouped_data(csv_data, 'date');
-
+    const country_names = country_data.map(item => item.name);
+    let lines_data = csv_data.filter(item => country_names.indexOf(item.location) > -1);
+    lines_data = get_grouped_data(lines_data, 'date');
     lines_data = lines_data.map(item => {
         item.count = item.count/country_data.length;
         return item;
     });
+    lines_data = _.orderBy(lines_data, [(item) => new Date(item.date)], ['asc']);
 
     // Draw line for average count
     draw_a_line(lines_data, 'Average', 0, country_data.length);
@@ -751,6 +766,7 @@ function draw_lines_chart(csv_data) {
     country_data.forEach((country, indx) => {
         let c_data = csv_data.filter(item => item.location === country.name);
         c_data = get_grouped_data(c_data, 'date');
+        c_data = _.orderBy(c_data, [(item) => new Date(item.date)], ['asc']);
         draw_a_line(c_data, country.name, indx+1, country_data.length);
     });
 }
@@ -774,10 +790,9 @@ function draw_a_line(dataset, country_name, indx, country_count) {
     }
 
     if (!axesExists) {
+        xAccessor = d => new Date(d.date);
         yAccessor = d => d.count;
-        const dateParser = d3.timeParse("%m/%d/%Y");
-        xAccessor = d => dateParser(d.date);
-
+        
         // Create chart dimensions
         dimensions.boundedWidth = dimensions.width - dimensions.margin.left - dimensions.margin.right
         dimensions.boundedHeight = dimensions.height - dimensions.margin.top - dimensions.margin.bottom
@@ -794,7 +809,7 @@ function draw_a_line(dataset, country_name, indx, country_count) {
                 dimensions.margin.left
             }, ${
                 dimensions.margin.top
-            })`)
+            })`);
 
         bounds.append("defs").append("clipPath")
             .attr("id", "bounds-clip-path")
@@ -837,19 +852,18 @@ function draw_a_line(dataset, country_name, indx, country_count) {
     svg.on('mousedown', function (d) {
         tooltip.hide()
     });
-    svg.append('g')
-        .call(tooltip);
+    svg.append('g').call(tooltip);
 
     // Draw data
     const lineGenerator = d3.line()
         .x(d => xScale(xAccessor(d)))
         .y(d => yScale(yAccessor(d)));
-
+    const line_data = lineGenerator(dataset);
 
     const country_colors = ['#6c4242', '#ff1e00', '#00ff0e', '#20BEFF', '#1600ff', '#568f3c', '#00ffd6', '#c4c411', '#212121', '#6e6ae1', '#e929e7'];
     clip.append("path")
     .attr("class", "line")
-    .attr("d", lineGenerator(dataset))
+    .attr("d", line_data)
     .attr("stroke", country_colors[indx%11])
     .style("stroke-dasharray", () => {
         return country_name === 'Average' ? "3, 3" : "0, 0";
@@ -929,4 +943,23 @@ function draw_a_line(dataset, country_name, indx, country_count) {
         set_cell_tooltip_position(event, tooltip, {data: {name: country_name, date, dated_count, total_count}});
     }
 
+}
+
+
+// Common methods
+
+function get_color_range() {
+    let color_range;
+    switch (selectedProperty.name) {
+        case "total_cases":
+        color_range = ["#a30f15", "#e39295"];
+        break;
+        case "total_deaths":
+        color_range = ["#ff0000", "#f4a2a2"];
+        break;
+        case "vaccinated":
+        color_range = ["#008d00", "#9bf29b"];
+        break;
+    }
+    return color_range;
 }

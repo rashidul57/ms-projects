@@ -2,11 +2,10 @@ let sortInfo, table_data, tableFields;
 const filter_params = {field: undefined, start: undefined, end: undefined};
 
 async function draw_table() {
-    dataSource = 'jhu';
-    await load_covid_data();
-    let owid_path = `./data/owid/full_data.csv`;
-    const owid_data = await d3.csv(owid_path);
-    const mapped_owid_data = _.keyBy(owid_data, 'location');
+    let covid_data = await load_covid_data(false);
+    // let owid_path = `./data/owid/full_data.csv`;
+    // const owid_data = await d3.csv(owid_path);
+    // const mapped_owid_data = _.keyBy(owid_data, 'location');
 
     tableFields = _.cloneDeep(prop_fields);
     tableFields.unshift({name: 'population', label: 'Population'});
@@ -14,9 +13,9 @@ async function draw_table() {
     tableFields.push({name: 'perc_vaccinated', label: '% Vaccinated'});
     tableFields.push({name: 'perc_infected', label: '% Infected'});
     tableFields.push({name: 'perc_death', label: '% Death'});
-    
+
     load_filter_options();
-    
+
     if (!sortInfo) {
       set_sort_info(tableFields[0]);
     }

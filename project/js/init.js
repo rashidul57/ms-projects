@@ -1,6 +1,6 @@
-let selectedProperty, percentType, covid_data, dataSource, chartType, worldMapData, selectedMode;
-let mappedCovidData, progressChart;
-const prop_fields = ['total_cases', 'vaccinated', 'total_deaths'].map(field => {
+let selectedProperty, percentType, chartType, worldMapData, selectedMode;
+let mapped_owid_data, progressChart;
+const prop_fields = ['total_cases', 'total_deaths', 'vaccinated'].map(field => {
     const label = _.startCase(field.split('_').join(' '));
     return {
         name: field,
@@ -19,10 +19,11 @@ async function init() {
 async function load_map_data() {
     let worldMapJson = './data/world.geo.json';
     worldMapData = await d3.json(worldMapJson);
-    await load_covid_data();
+    const covid_data = await load_covid_data(true);
+    return covid_data;
 }
 
-function load_options() {
+async function load_options() {
     const modes = [
         {name: 'world-map', label: 'Map'},
         {name: 'chart', label: 'Chart'},
@@ -78,31 +79,7 @@ function load_options() {
         update_ui();
     });
 
-    // Data sources
-    const data_src_options = [
-        {name: 'who', label: 'WHO'},
-        {name: 'owid', label: 'OWID'},
-        {name: 'ecdc', label: 'ECDC'},
-        {name: 'jhu', label: 'JHU'}
-    ];
-    dataSource = data_src_options[0].name;
-    d3.select("#drp-data-source")
-    .selectAll('data-source-options')
-    .data(data_src_options)
-    .enter()
-    .append('option')
-    .text((d) => { return d.label; })
-    .attr("value", (d) => { return d.name; });
-    
-    d3.select("#drp-data-source").on("change", function(d) {
-        const property = d3.select(this).property("value");
-        dataSource = data_src_options.find(opt => opt.name === property).name;
-        load_covid_data().then(() => {
-            update_ui();
-        });
-    });
-
-    // Data sources
+    // Chart options
     const chart_options = [
         {name: 'line', label: 'Line Chart'},
         {name: 'bar', label: 'Bar Chart'},
@@ -171,24 +148,34 @@ function update_ui() {
     }
 }
 
-async function load_covid_data() {
-    let covidCsv = `./data/${dataSource}/full_data.csv`;
-    covid_data = await d3.csv(covidCsv);
+async function load_jhu_data() {
+    let covidCsv = `./data/jhu/full_data.csv`;
+    let csv_data = await d3.csv(covidCsv);
+    csv_data = csv_data.filter(item => {
+        return ['World', 'North America', 'Europe', 'Asia', 'Africa', 'European Union', 'South America'].indexOf(item.location) === -1;
+    });
+    return csv_data;
+}
+
+async function load_owd_data() {
+    let owid_path = `./data/owid/full_data.csv`;
+    const owid_data = await d3.csv(owid_path);
+    mapped_owid_data = _.keyBy(owid_data, 'location');
+}
+
+async function load_covid_data(with_map_feature) {
+    let covid_data = await load_jhu_data();
+    await load_owd_data();
     total_cases = _.reduce(covid_data, (sum, item) => {
         return sum += Number(item.total_cases || 0);
     }, 0);
 
-    if (!mappedCovidData && covid_data.columns.indexOf('population') === -1) {
-        let populationUrl = `./data/owid/full_data.csv`;
-        const population_data = await d3.csv(populationUrl);
-        mappedCovidData = _.keyBy(population_data, 'location');
-    }
-
     covid_data = _.map(covid_data, (record) => {
         const year = new Date(record['last_updated_date']).getFullYear();
         const total_cases = Number(Number(record['total_cases'] || 0).toFixed(0));
-        const population = Number(record.population || (mappedCovidData && mappedCovidData[record.location] && mappedCovidData[record.location].population));
-        const code = record.iso_code || (mappedCovidData && mappedCovidData[record.location] && mappedCovidData[record.location].iso_code);
+        const population = Number(record.population || (mapped_owid_data && mapped_owid_data[record.location] && mapped_owid_data[record.location].population));
+        const code = record.iso_code || (mapped_owid_data && mapped_owid_data[record.location] && mapped_owid_data[record.location].iso_code);
+        const vaccinated = parseInt(mapped_owid_data[record.location] && mapped_owid_data[record.location].people_vaccinated || 0);
         const rec = {
             ...record,
             country: record['location'],
@@ -196,13 +183,11 @@ async function load_covid_data() {
             total_cases,
             code,
             date: record['last_updated_date'] || record['date'],
-            year
+            year,
+            vaccinated
         };
         return rec;
     });
-    if (!mappedCovidData) {
-        mappedCovidData = _.keyBy(covid_data, 'location');
-    }
 
     const grouped_data = _.groupBy(covid_data, 'country');
     covid_data = _.map(grouped_data, ((items, country) => {
@@ -217,9 +202,12 @@ async function load_covid_data() {
         return record;
     }));
 
-    covid_data = _(covid_data)
-        .keyBy('code')
-        .merge(_.keyBy(worldMapData.features, 'properties.iso_a3'))
-        .values()
-        .value();
+    if (with_map_feature) {
+        covid_data = _(covid_data)
+            .keyBy('code')
+            .merge(_.keyBy(worldMapData.features, 'properties.iso_a3'))
+            .values()
+            .value();
+    }
+    return covid_data;
 }

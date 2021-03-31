@@ -197,7 +197,7 @@ g.area-y-axis text {
 
   .table tr{
     display: grid;
-    grid-template-columns: 14% 14% 14% 14% 14% 10% 10% 10%;
+    grid-template-columns: 10% 12% 12% 12% 12% 11% 11% 10% 10%;
     border-bottom: 1px solid #e5e5e5;
     font-size: 13px;
     padding: 3px 5px;

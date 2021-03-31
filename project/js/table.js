@@ -2,10 +2,7 @@ let sortInfo, table_data, tableFields;
 const filter_params = {field: undefined, start: undefined, end: undefined};
 
 async function draw_table() {
-    let covid_data = await load_covid_data(false);
-    // let owid_path = `./data/owid/full_data.csv`;
-    // const owid_data = await d3.csv(owid_path);
-    // const mapped_owid_data = _.keyBy(owid_data, 'location');
+    let covid_data = await load_covid_data();
 
     tableFields = _.cloneDeep(prop_fields);
     tableFields.unshift({name: 'population', label: 'Population'});

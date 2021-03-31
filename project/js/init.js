@@ -1,6 +1,6 @@
 let selectedProperty, percentType, chartType, worldMapData, selectedMode;
 let mapped_owid_data, progressChart;
-const prop_fields = ['total_cases', 'total_deaths', 'vaccinated'].map(field => {
+const prop_fields = ['total_cases', 'total_deaths', 'vaccinated', 'total_tests'].map(field => {
     const label = _.startCase(field.split('_').join(' '));
     return {
         name: field,
@@ -15,13 +15,6 @@ async function init() {
     update_ui();
 }
 
-
-async function load_map_data() {
-    let worldMapJson = './data/world.geo.json';
-    worldMapData = await d3.json(worldMapJson);
-    const covid_data = await load_covid_data(true);
-    return covid_data;
-}
 
 async function load_options() {
     const modes = [
@@ -163,7 +156,7 @@ async function load_owd_data() {
     mapped_owid_data = _.keyBy(owid_data, 'location');
 }
 
-async function load_covid_data(with_map_feature) {
+async function load_covid_data() {
     let covid_data = await load_jhu_data();
     await load_owd_data();
     total_cases = _.reduce(covid_data, (sum, item) => {
@@ -191,7 +184,6 @@ async function load_covid_data(with_map_feature) {
 
     const grouped_data = _.groupBy(covid_data, 'country');
     covid_data = _.map(grouped_data, ((items, country) => {
-        // const record = {country, population: items[0].population, code: items[0].code};
         const record = {...items[items.length-1]};
         prop_fields.forEach(field => {
             items.forEach(item => {
@@ -202,12 +194,47 @@ async function load_covid_data(with_map_feature) {
         return record;
     }));
 
-    if (with_map_feature) {
-        covid_data = _(covid_data)
-            .keyBy('code')
-            .merge(_.keyBy(worldMapData.features, 'properties.iso_a3'))
-            .values()
-            .value();
-    }
+    return covid_data;
+}
+
+function get_grouped_data1(csv_data, group_by) {
+    let grouped_data = _.groupBy(csv_data, group_by);
+    grouped_data = _.map(grouped_data, (items, key) => {
+        const count = _.reduce(items, (sum, item) => {
+            return sum += Number(item[selectedProperty.name] || 0);
+        }, 0);
+        // const item = {
+        //     name: key,
+        //     count,
+        //     code: items[0].code
+        // };
+        // if (group_by === 'date' && !item.date) {
+        //     item.date = key;
+        // }
+        const record = {
+            ...items[items.length-1],
+            count,
+            name: key,
+        };
+        prop_fields.forEach(field => {
+            items.forEach(item => {
+                record[field.name] = Number(item[field.name]) || 0;
+                record[field.name] += Number(item[field.name]) || 0;
+            });
+        });
+        return record;
+    });
+    return grouped_data;
+}
+
+async function load_map_data() {
+    const worldMapJson = './data/world.geo.json';
+    const worldMapData = await d3.json(worldMapJson);
+    let covid_data = await load_covid_data();
+    covid_data = _(covid_data)
+        .keyBy('code')
+        .merge(_.keyBy(worldMapData.features, 'properties.iso_a3'))
+        .values()
+        .value();
     return covid_data;
 }

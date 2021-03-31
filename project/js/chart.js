@@ -16,7 +16,6 @@ async function draw_chart() {
     chartData = _.orderBy(csv_data, [(item) => {
         if (mapped_owid_data[item.location]) {
             item.code = mapped_owid_data[item.location].iso_code;
-            item.code = mapped_owid_data[item.location].iso_code;
             item.vaccinated = parseInt(mapped_owid_data[item.location] && mapped_owid_data[item.location].people_vaccinated || 0);
         }
         return new Date(item.date).getTime();

@@ -3,6 +3,8 @@ const size = 70;
 let start = 0;
 let playCtlIntval, chartData, progressData;
 let line_chart_state = {};
+const selected_countries = {};
+let top_or_selected = 'Top';
 
 async function draw_chart() {
     let start_date, end_date;
@@ -34,8 +36,8 @@ async function draw_chart() {
         .attr("class", "summary-svg")
         .style("display", 'inline-block');
 
-        const sd_format = moment(start_date).format("MMMM Do YYYY");
-        const ed_format = moment(end_date).format("MMMM Do YYYY");
+        const sd_format = moment(start_date).format("LL");
+        const ed_format = moment(end_date).format("LL");
         
         const summaries = [
             {name: 'start-date', x: 65, y: 12, text: sd_format},
@@ -137,7 +139,6 @@ function togglePlay() {
                     draw_scatter_chart(cov_data);
                     break;
                     case 'line':
-                    console.log(cov_data.length)
                     draw_lines_chart(cov_data);
                     break;
                 }
@@ -147,7 +148,7 @@ function togglePlay() {
                     start = 0;
                 }
                 document.getElementById('slider-range').value = start*100/num_of_days;
-                const text = start > 22 && start < 415 ? moment(cur_date).format("MMMM Do YYYY") : '';
+                const text = start > 22 && start < 415 ? moment(cur_date).format("LL") : '';
                 d3.select('.current-date')
                     .attr('x', (start*2.1 + 50))
                     .text(text);
@@ -290,7 +291,7 @@ function draw_tree_chart(cov_data) {
             return size + 'px';
         })
         .attr("fill", (d) => {
-            const perc = get_cell_perc_color(d);
+            const perc = get_cell_perc_color(data, d);
             const color = perc <= 0.5 ? 'black' : 'white';
             return color;
         });
@@ -461,7 +462,7 @@ function draw_scatter_chart(data) {
 
     
     const tooltip = d3.tip().attr('class', 'd3-tip')
-    .html(function (event, d) {
+    .html(function (event, d, x, y) {
         const value = (d.data.count || 0).toLocaleString('en-US');
         const name = d.data.name || 'Greenland';
         return `<div>
@@ -471,7 +472,8 @@ function draw_scatter_chart(data) {
     });
 
     svg.on('mousedown', function (d) {
-        tooltip.hide()
+        // tooltip.hide()
+        tooltip.style("opacity", 0);
     });
     svg.attr("width", width)
         .attr("height", height)
@@ -532,7 +534,7 @@ function draw_scatter_chart(data) {
             return size + 'px';
         })
         .attr("fill", (d) => {
-            const perc = get_cell_perc_color(d);
+            const perc = get_cell_perc_color(data, d);
             const color = perc <= 0.5 ? 'black' : 'white';
             return color;
         });
@@ -650,7 +652,7 @@ function refresh_bar_chart(data, by_prop) {
       .call(d3.axisLeft(y));
 }
 
-function get_cell_perc_color(d) {
+function get_cell_perc_color(data, d) {
     const total = _.reduce(data, (sum, item) => {
         return sum += Number(item.count || 0);
     }, 0);
@@ -661,14 +663,65 @@ function get_cell_perc_color(d) {
 }
 
 function set_cell_tooltip_position(event, tooltip, d) {
-    const x = Math.abs(event.pageX) - 50;
+    let x = Math.abs(event.pageX) - 50;
     let y = Math.abs(event.pageY) + 15;
+    if (y > 620) {
+        y = 620;
+        if (x > 500) {
+            x -= 150;
+        } else {
+            x += 150;
+        }
+    }
     tooltip.show(event, d);
     $('.d3-tip').css({"left": (x + "px"), "top": (y + "px")});
 }
 
 
 // Draw lines chart
+
+function toggle_country_list() {
+    const panel = d3.select('.country-list');
+    panel.selectAll('label').remove();
+    const visible = panel.style('display');
+    panel.style("display", visible === 'none' ? 'inline-block' : 'none');
+    if (visible === 'none') {
+        let grp_data = get_grouped_data(chartData, 'location');
+        grp_data = _.orderBy(grp_data, ['count'], ['desc']);
+        let countries = _.map(grp_data, 'name');
+        const top_countries = Object.keys(selected_countries).length === 0;
+        if (top_countries) {
+            countries.forEach((name, indx) => {
+                if (indx < 10) {
+                    selected_countries[name] = true;
+                }
+            });
+        }
+        countries.sort();
+
+        labels = panel.selectAll(".sel-country")
+        .data(countries)
+        .enter()
+        .append('label')
+            .attr('for', function(d,i){ return 'chk-sel-' + _.camelCase(d); })
+            .text(function(d, i) {
+                return d;
+            })
+        .append("input")
+            .attr('class', 'sel-country')
+            .attr("checked", function (d, i) {
+                return selected_countries[d];
+            })
+            .attr("type", "checkbox")
+            .attr("id", function(d,i) { return 'chk-sel-' + _.camelCase(d); })
+            .on("click", function (ev, d) {
+                top_or_selected = 'Selected';
+                selected_countries[d] = ev.target.checked;
+            });
+    }
+}
+
+
 function draw_lines_chart(csv_data) {
     // clean old content if exists
     d3.selectAll('.chart svg.lines-chart, .legend-line, .legend-text, .top-countries').remove();
@@ -678,26 +731,31 @@ function draw_lines_chart(csv_data) {
     country_data = _.orderBy(country_data, [(item) => {
         return item.count;
     }], ['desc']);
-    country_data = _.take(country_data, 10);
-    let chartData = get_grouped_data(csv_data, 'date');
+    const top_countries = Object.keys(selected_countries).length === 0;
+    if (top_countries) {
+        country_data = _.take(country_data, 10);
+    } else {
+        country_data = country_data.filter(item => selected_countries[item.name]);
+    }
+    let lines_data = get_grouped_data(csv_data, 'date');
 
-    chartData = chartData.map(item => {
+    lines_data = lines_data.map(item => {
         item.count = item.count/country_data.length;
         return item;
     });
 
     // Draw line for average count
-    draw_a_line(chartData, 'Average', 0);
+    draw_a_line(lines_data, 'Average', 0, country_data.length);
 
-    // Draw a line for each of top 10 countries
+    // Draw a line for each of top/selected countries
     country_data.forEach((country, indx) => {
         let c_data = csv_data.filter(item => item.location === country.name);
         c_data = get_grouped_data(c_data, 'date');
-        draw_a_line(c_data, country.name, indx+1);
+        draw_a_line(c_data, country.name, indx+1, country_data.length);
     });
 }
 
-function draw_a_line(dataset, country_name, indx) {
+function draw_a_line(dataset, country_name, indx, country_count) {
     const mappedData = _.keyBy(dataset, 'date');
     // Init configurations
     let bounds, xScale, yScale, xAccessor, yAccessor, clip;
@@ -765,12 +823,14 @@ function draw_a_line(dataset, country_name, indx) {
 
     const tooltip = d3.tip().attr('class', 'd3-tip')
     .html(function (event, d) {
-        const value = (d.data.count || 0).toLocaleString('en-US');
+        const dated_count = (d.data.dated_count || 0).toLocaleString('en-US');
+        const total_count = (d.data.total_count || 0).toLocaleString('en-US');
         const name = d.data.name || 'Greenland';
         return `<div>
         <p>Country: <strong>${name}</strong></p>
         <p>Date: <strong>${d.data.date}</strong></p>
-        <p>${selectedProperty.label}: <strong>${value}</strong></p>
+        <p>Dated Count: <strong>${dated_count}</strong></p>
+        <p>${selectedProperty.label}: <strong>${total_count}</strong></p>
         </div>`;
     });
 
@@ -790,7 +850,7 @@ function draw_a_line(dataset, country_name, indx) {
     clip.append("path")
     .attr("class", "line")
     .attr("d", lineGenerator(dataset))
-    .attr("stroke", country_colors[indx])
+    .attr("stroke", country_colors[indx%11])
     .style("stroke-dasharray", () => {
         return country_name === 'Average' ? "3, 3" : "0, 0";
     })
@@ -798,21 +858,13 @@ function draw_a_line(dataset, country_name, indx) {
         return country_name === 'Average' ? 3 : 2;
     })
     .on('mouseover', function (event, d) {
-        const mousePosition = d3.pointer(event);
-        let date = xScale.invert(mousePosition[0]);
-        date = moment(date).format("M/D/YY");
-        const count = mappedData[date] && mappedData[date].count || 0;
-        set_cell_tooltip_position(event, tooltip, {data: {name: country_name, date, count}});
+        show_dated_tip(event);
     })
     .on('mouseout', function (d) {
         tooltip.hide();
     })
     .on("mousemove", function(event, d){
-        const mousePosition = d3.pointer(event);
-        let date = xScale.invert(mousePosition[0]);
-        date = moment(dt).format("M/D/YY");
-        const count = mappedData[date] && mappedData[date].count || 0;
-        set_cell_tooltip_position(event, tooltip, {data: {name: country_name, date, count}});
+        show_dated_tip(event);
     })
     .on('mousedown', function (d) {
         tooltip.hide()
@@ -820,7 +872,7 @@ function draw_a_line(dataset, country_name, indx) {
 
     clip.append('path')
     .attr("class", "legend-line")
-    .style('stroke', country_colors[indx])
+    .style('stroke', country_colors[indx%11])
     .attr("stroke-width", 2)
     .style("stroke-dasharray", () => {
         return country_name === 'Average' ? "3, 3" : "0, 0";
@@ -829,7 +881,7 @@ function draw_a_line(dataset, country_name, indx) {
     
     clip.append('text')
     .attr("class", "legend-text")
-    .attr('fill', country_colors[indx])
+    .attr('fill', country_colors[indx%11])
     .attr("x", 65)
     .attr("y", 55+indx*22)
     .html(country_name);
@@ -841,7 +893,7 @@ function draw_a_line(dataset, country_name, indx) {
         .attr('fill', 'Black')
         .attr("x", 15)
         .attr("y", 30)
-        .html("Top 10 Countries");
+        .html(`${top_or_selected} ${country_count} Countries`);
 
         const yAxisGenerator = d3.axisLeft()
             .scale(yScale)
@@ -862,6 +914,19 @@ function draw_a_line(dataset, country_name, indx) {
 
     if (!axesExists) {
         line_chart_state = {bounds, xScale, yScale, xAccessor, yAccessor, clip};
+    }
+
+    function show_dated_tip(event) {
+        const mousePosition = d3.pointer(event);
+        let date = xScale.invert(mousePosition[0]);
+        date = moment(date).format("LL").replace('00', '20');
+        const dated_count = mappedData[date] && mappedData[date].count || 0;
+        const cur_date = new Date(date);
+        const total_count = _.reduce(dataset, (sum, item) => {
+            const in_date = new Date(item.date).getTime() <= cur_date.getTime();
+            return sum += in_date ? (item.count || 0) : 0;
+        }, 0);
+        set_cell_tooltip_position(event, tooltip, {data: {name: country_name, date, dated_count, total_count}});
     }
 
 }

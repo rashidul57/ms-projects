@@ -104,11 +104,11 @@ function load_options() {
 
     // Data sources
     const chart_options = [
+        {name: 'line', label: 'Line Chart'},
         {name: 'bar', label: 'Bar Chart'},
         {name: 'area', label: 'Area Chart'},
         {name: 'tree', label: 'Tree Chart'},
-        {name: 'scatter', label: 'Scatter Chart'},
-        {name: 'line', label: 'Line Chart'}
+        {name: 'scatter', label: 'Scatter Chart'}
     ];
     chartType = chart_options[0].name;
     d3.select("#drp-chart-type")
@@ -130,6 +130,17 @@ function load_options() {
         progressChart = d3.select(this).property('checked');
         update_ui();
     });
+
+    d3.select(".btn-change-country")
+    .on("click", function (){
+        toggle_country_list();
+    });
+    d3.select(".btn-apply-country-sel")
+    .on("click", function (){
+        draw_lines_chart(_.cloneDeep(chartData));
+        toggle_country_list();
+    });
+    
 }
 
 function update_ui() {
@@ -152,6 +163,9 @@ function update_ui() {
             d3.selectAll('.progress-container, .summary-svg').style("display", visibility);
             d3.selectAll('.chart-option, .field-prop, .progress-checkbox').style("display", "inline-block");
             d3.selectAll('.chart.item').classed('progress-visible', visibility === 'inline-block');
+            if (chartType === 'line') {
+                d3.selectAll('.btn-change-country').style("display", "inline-block");
+            }
             draw_chart();
             break;
     }

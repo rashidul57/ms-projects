@@ -5,19 +5,12 @@ let playCtlIntval, chartData, progressData;
 let line_chart_state = {};
 const selected_countries = {};
 let top_or_selected = 'Top';
-const date_format = 'Y-M-D';
+const date_format = 'YYYY-MM-DD';
 
 async function draw_chart() {
     let start_date, end_date;
-    let csv_data = await load_jhu_data();
-    csv_data = csv_data.filter(item => {
-        return ['World', 'North America', 'Europe', 'Asia', 'Africa', 'European Union', 'South America'].indexOf(item.location) === -1;
-    });
+    let csv_data = full_covid_data;
     chartData = _.orderBy(csv_data, [(item) => {
-        if (mapped_owid_data[item.location]) {
-            item.code = mapped_owid_data[item.location].iso_code;
-            item.vaccinated = parseInt(mapped_owid_data[item.location] && mapped_owid_data[item.location].people_vaccinated || 0);
-        }
         return new Date(item.date).getTime();
     }], ['asc']);
 
@@ -90,25 +83,6 @@ async function draw_chart() {
     }
 }
 
-function get_grouped_data(csv_data, group_by) {
-    let grouped_data = _.groupBy(csv_data, group_by);
-    grouped_data = _.map(grouped_data, (items, key) => {
-        const count = _.reduce(items, (sum, item) => {
-            return sum += Number(item[selectedProperty.name] || 0);
-        }, 0);
-        const item = {
-            name: key,
-            count,
-            code: items[0].code
-        };
-        if (group_by === 'date' && !item.date) {
-            item.date = key;
-        }
-        return item;
-    });
-    return grouped_data;
-}
-
 function togglePlay() {
     playing = !playing;
     if (playing) {
@@ -116,7 +90,7 @@ function togglePlay() {
         d3.select('.btn-control .play-text').style("display", "none");
         playCtlIntval = setInterval(() => {
             if (playing) {
-                const {start_date, end_date, num_of_days, chartData} = progressData;
+                const {start_date, num_of_days, chartData} = progressData;
                 const cur_date = moment(start_date).add(start, 'days').toDate();
                 cov_data = _.filter(chartData, (item) => {
                     return new Date(item.date).getTime() >= start_date.getTime() && new Date(item.date).getTime() <= cur_date.getTime();
@@ -694,7 +668,6 @@ function set_cell_tooltip_position(event, tooltip, d) {
 
 function toggle_country_list() {
     const panel = d3.select('.country-list');
-    panel.selectAll('label').remove();
     const visible = panel.style('display');
     panel.style("display", visible === 'none' ? 'inline-block' : 'none');
     if (visible === 'none') {
@@ -722,6 +695,9 @@ function toggle_country_list() {
         .append("input")
             .attr('class', 'sel-country')
             .attr("checked", function (d, i) {
+                // if (selected_countries[d]) {
+                //     console.log(d)
+                // }
                 return selected_countries[d];
             })
             .attr("type", "checkbox")
@@ -730,6 +706,8 @@ function toggle_country_list() {
                 top_or_selected = 'Selected';
                 selected_countries[d] = ev.target.checked;
             });
+    } else {
+        panel.selectAll('label, label input').remove();
     }
 }
 
@@ -745,7 +723,7 @@ function draw_lines_chart(csv_data) {
     }], ['desc']);
     const top_countries = Object.keys(selected_countries).length === 0;
     if (top_countries) {
-        country_data = _.take(country_data, 10);
+        country_data = _.take(country_data, 5);
     } else {
         country_data = country_data.filter(item => selected_countries[item.name]);
     }
@@ -759,7 +737,7 @@ function draw_lines_chart(csv_data) {
     lines_data = _.orderBy(lines_data, [(item) => new Date(item.date)], ['asc']);
 
     // Draw line for average count
-    draw_a_line(lines_data, 'Average', 0, country_data.length);
+    // draw_a_line(lines_data, 'Average', 0, country_data.length);
 
     // Draw a line for each of top/selected countries
     country_data.forEach((country, indx) => {
@@ -890,13 +868,13 @@ function draw_a_line(dataset, country_name, indx, country_count) {
     .style("stroke-dasharray", () => {
         return country_name === 'Average' ? "3, 3" : "0, 0";
     })
-    .attr('d', `M20,${50+indx*22},L60,${50+indx*22}`);
+    .attr('d', `M20,${27+indx*22},L60,${27+indx*22}`);
     
     clip.append('text')
     .attr("class", "legend-text")
     .attr('fill', country_colors[indx%11])
     .attr("x", 65)
-    .attr("y", 55+indx*22)
+    .attr("y", 33+indx*22)
     .html(country_name);
 
     // Draw peripherals
@@ -932,14 +910,15 @@ function draw_a_line(dataset, country_name, indx, country_count) {
     function show_dated_tip(event) {
         const mousePosition = d3.pointer(event);
         let date = xScale.invert(mousePosition[0]);
-        date = moment(date).format("LL").replace('00', '20');
-        const dated_count = mappedData[date] && mappedData[date].count || 0;
+        const formated_date = moment(date).format("LL").replace('00', '20');
+        const dmy_date = moment(date).format(date_format);
+        const dated_count = mappedData[dmy_date] && mappedData[dmy_date].count || 0;
         const cur_date = new Date(date);
         const total_count = _.reduce(dataset, (sum, item) => {
             const in_date = new Date(item.date).getTime() <= cur_date.getTime();
             return sum += in_date ? (item.count || 0) : 0;
         }, 0);
-        set_cell_tooltip_position(event, tooltip, {data: {name: country_name, date, dated_count, total_count}});
+        set_cell_tooltip_position(event, tooltip, {data: {name: country_name, date:formated_date, dated_count, total_count}});
     }
 
 }
@@ -951,14 +930,16 @@ function get_color_range() {
     let color_range;
     switch (selectedProperty.name) {
         case "total_cases":
-        color_range = ["#a30f15", "#e39295"];
+        color_range = ["#a30f15", "#dfa6ad"];
         break;
         case "total_deaths":
-        color_range = ["#ff0000", "#f4a2a2"];
+        color_range = ["#ff0000", "#fadbdb"];
         break;
         case "vaccinated":
         color_range = ["#008d00", "#9bf29b"];
         break;
+        default:
+        color_range = ["#7108a3", "#ab8cba"];
     }
     return color_range;
 }

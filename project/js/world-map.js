@@ -44,7 +44,7 @@ async function draw_world_map() {
 
     const color_range = get_color_range();
     const min_count = _.minBy(covid_data, selectedProperty.name)[selectedProperty.name];
-    const max_count = _.maxBy(covid_data, selectedProperty.name)[selectedProperty.name];
+    const max_count = _.maxBy(covid_data, selectedProperty.name)[selectedProperty.name] || 1;
 
     let color_space = d3.scaleSequential()
     .domain([max_count, min_count])

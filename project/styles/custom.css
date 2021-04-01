@@ -192,21 +192,30 @@ g.area-y-axis text {
   .table{
     height: 100%;
     width: 100%;
-    overflow-y: auto;
+    overflow: auto;
   }
 
   .table tr{
     display: grid;
-    grid-template-columns: 10% 12% 12% 12% 12% 11% 11% 10% 10%;
-    border-bottom: 1px solid #e5e5e5;
+    grid-template-columns: 100px 100px 100px 100px 100px 100px 130px 100px 100px 100px 100px 100px 100px 100px 100px;
     font-size: 13px;
-    padding: 3px 5px;
   }
   .table tr:first-child{
       position: sticky;
       top: 0;
       background: #ccc;
       font-weight: bold;
+  }
+  .table tr:first-child td{
+    background: #ccc;
+  }
+  .table tr td{
+    display: inline-block;
+    padding: 3px 0;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  .table tr td:first-child{
+    padding-left: 5px;
   }
   .table tr td.ta-right{
       text-align: right;

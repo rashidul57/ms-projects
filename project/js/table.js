@@ -2,10 +2,11 @@ let sortInfo, table_data, tableFields;
 const filter_params = {field: undefined, start: undefined, end: undefined};
 
 async function draw_table() {
-    let covid_data = await load_covid_data();
+    let covid_data = full_covid_data; // await load_covid_data();
+    covid_data = get_grouped_data(covid_data, 'country');
 
     tableFields = _.cloneDeep(prop_fields);
-    tableFields.unshift({name: 'population', label: 'Population'});
+    tableFields.unshift({name: 'population', label: 'Population', type: 'number'});
     tableFields.unshift({name: 'country', label: 'Country'});
     tableFields.push({name: 'perc_vaccinated', label: '% Vaccinated'});
     tableFields.push({name: 'perc_infected', label: '% Infected'});
@@ -36,7 +37,6 @@ async function draw_table() {
     table_data = covid_data
       .filter(item => Object.keys(item).length)
       .map(item => {
-          item.vaccinated = parseInt(mapped_owid_data[item.country] && mapped_owid_data[item.country].people_vaccinated || 0);
           item.perc_vaccinated = item.population ? (item.vaccinated/item.population) : 0;
           item.perc_infected = item.population ? (item.total_cases/item.population) : 0;
           item.perc_death = item.total_cases ? (item.total_deaths/item.total_cases) : 0;
@@ -84,7 +84,6 @@ function load_filter_options() {
 
 function apply_filter() {
     const header = table_data[0];
-    // let data = table_data;
     const t_data = _.cloneDeep(table_data);
     let data = t_data.splice(1);
     if (filter_params.start !== undefined && filter_params.end !== undefined && filter_params.field) {
@@ -106,7 +105,6 @@ function apply_filter() {
     }], [sortInfo.order]);
     data.unshift(header);
     refresh_table(data, header);
-    
 }
 
 function set_sort_info(field) {
@@ -116,12 +114,14 @@ function set_sort_info(field) {
 
 function sortTable(d) {
     const sort_field = tableFields.find(field => field.label === d);
-    if (sort_field.name === sortInfo.name) {
-        sortInfo.order = sortInfo.order === 'asc' ? 'desc' : 'asc';
-    } else {
-        set_sort_info(sort_field);
+    if (sort_field) {
+        if (sort_field.name === sortInfo.name) {
+            sortInfo.order = sortInfo.order === 'asc' ? 'desc' : 'asc';
+        } else {
+            set_sort_info(sort_field);
+        }
+        apply_filter();
     }
-    apply_filter();
 }
 
 function refresh_table(table_data, header) {
@@ -135,9 +135,9 @@ function refresh_table(table_data, header) {
     const headerCaptions = Object.values(header);
     const td = tr.selectAll("td")
     .data(function(d, i) {
-      return tableFields.map(field => {
-          return d[field.name];
-      });
+        return tableFields.map(field => {
+            return d[field.name];
+        });
     })
     .enter()
     .append("td")
@@ -145,10 +145,11 @@ function refresh_table(table_data, header) {
         return i > 0 ? 'ta-right' : '';
     })
     .text(function(d, i) {
-      if (i > 0 && typeof(d) == 'number') {
-        d = d3.format(",")(d);
-      }
-      return d;
+        const field = tableFields[i];
+        if (i > 0 && field && field.type === 'number' && (!d || !isNaN(d))) {
+            d = d3.format(",")(d);
+        }
+        return d;
     })
     .on('click', (ev, d) => {
         sortTable(d);

@@ -1,10 +1,11 @@
 let selectedProperty, percentType, chartType, worldMapData, selectedMode;
-let mapped_owid_data, progressChart;
-const prop_fields = ['total_cases', 'total_deaths', 'vaccinated', 'total_tests'].map(field => {
+let progressChart, full_covid_data;
+const prop_fields = ['new_cases', 'total_cases', 'new_deaths', 'total_deaths', 'reproduction_rate', 'vaccinated', 'total_tests', 'icu_patients', 'hosp_patients', 'positive_rate'].map(field => {
     const label = _.startCase(field.split('_').join(' '));
     return {
         name: field,
-        label
+        label,
+        type: 'number'
     };
 });
 
@@ -132,7 +133,7 @@ function update_ui() {
             let visibility = progressChart ? 'inline-block' : 'none';
             d3.selectAll('.progress-container, .summary-svg').style("display", visibility);
             d3.selectAll('.chart-option, .field-prop, .progress-checkbox').style("display", "inline-block");
-            d3.selectAll('.chart.item').classed('progress-visible', visibility === 'inline-block');
+            d3.selectAll('.chart').classed('progress-visible', visibility === 'inline-block');
             if (chartType === 'line') {
                 d3.selectAll('.btn-change-country').style("display", "inline-block");
             }
@@ -141,96 +142,70 @@ function update_ui() {
     }
 }
 
-async function load_jhu_data() {
-    let covidCsv = `./data/jhu/full_data.csv`;
-    let csv_data = await d3.csv(covidCsv);
-    csv_data = csv_data.filter(item => {
-        return ['World', 'North America', 'Europe', 'Asia', 'Africa', 'European Union', 'South America'].indexOf(item.location) === -1;
-    });
-    return csv_data;
-}
 
-async function load_owd_data() {
-    let owid_path = `./data/owid/full_data.csv`;
-    const owid_data = await d3.csv(owid_path);
-    mapped_owid_data = _.keyBy(owid_data, 'location');
-}
-
-async function load_covid_data() {
-    let covid_data = await load_jhu_data();
-    await load_owd_data();
-    total_cases = _.reduce(covid_data, (sum, item) => {
-        return sum += Number(item.total_cases || 0);
-    }, 0);
-
-    covid_data = _.map(covid_data, (record) => {
-        const year = new Date(record['last_updated_date']).getFullYear();
-        const total_cases = Number(Number(record['total_cases'] || 0).toFixed(0));
-        const population = Number(record.population || (mapped_owid_data && mapped_owid_data[record.location] && mapped_owid_data[record.location].population));
-        const code = record.iso_code || (mapped_owid_data && mapped_owid_data[record.location] && mapped_owid_data[record.location].iso_code);
-        const vaccinated = parseInt(mapped_owid_data[record.location] && mapped_owid_data[record.location].people_vaccinated || 0);
-        const rec = {
-            ...record,
-            country: record['location'],
-            population,
-            total_cases,
-            code,
-            date: record['last_updated_date'] || record['date'],
-            year,
-            vaccinated
-        };
-        return rec;
-    });
-
-    const grouped_data = _.groupBy(covid_data, 'country');
-    covid_data = _.map(grouped_data, ((items, country) => {
-        const record = {...items[items.length-1]};
-        prop_fields.forEach(field => {
-            items.forEach(item => {
-                record[field.name] = Number(item[field.name]) || 0;
-                record[field.name] += Number(item[field.name]) || 0;
-            });
-        });
-        return record;
-    }));
-
-    return covid_data;
-}
-
-function get_grouped_data1(csv_data, group_by) {
+function get_grouped_data(csv_data, group_by) {
     let grouped_data = _.groupBy(csv_data, group_by);
     grouped_data = _.map(grouped_data, (items, key) => {
         const count = _.reduce(items, (sum, item) => {
             return sum += Number(item[selectedProperty.name] || 0);
         }, 0);
-        // const item = {
-        //     name: key,
-        //     count,
-        //     code: items[0].code
-        // };
-        // if (group_by === 'date' && !item.date) {
-        //     item.date = key;
-        // }
-        const record = {
+        const item = {
             ...items[items.length-1],
-            count,
             name: key,
+            count,
+            [selectedProperty.name]: count,
+            code: items[0].code
         };
-        prop_fields.forEach(field => {
-            items.forEach(item => {
-                record[field.name] = Number(item[field.name]) || 0;
-                record[field.name] += Number(item[field.name]) || 0;
-            });
-        });
-        return record;
+        if (group_by === 'date' && !item.date) {
+            item.date = key;
+        }
+        return item;
     });
     return grouped_data;
 }
 
+
+/**
+ * Load whole covid data
+ */
+async function load_covid_data() {
+    let covidCsv = `./data/covid-owid.csv`;
+    let covid_data = await d3.csv(covidCsv);
+    covid_data = covid_data.filter(item => {
+        return ['World', 'North America', 'Europe', 'Asia', 'Africa', 'European Union', 'South America'].indexOf(item.location) === -1;
+    });
+    total_cases = _.reduce(covid_data, (sum, item) => {
+        return sum += Number(item.total_cases || 0);
+    }, 0);
+
+    full_covid_data = _.map(covid_data, (record) => {
+        const year = new Date(record['last_updated_date']).getFullYear();
+        const total_cases = Number(Number(record['total_cases'] || 0).toFixed(0));
+        const country = record['location'];
+        const rec = {
+            ...record,
+            country,
+            population: record.population,
+            total_cases,
+            code: record.iso_code,
+            date: record['last_updated_date'] || record['date'],
+            year,
+            vaccinated: record.people_vaccinated
+        };
+        return rec;
+    });
+
+    return full_covid_data;
+}
+
+/**
+ * Load world map topology data
+ */
 async function load_map_data() {
     const worldMapJson = './data/world.geo.json';
     const worldMapData = await d3.json(worldMapJson);
     let covid_data = await load_covid_data();
+    covid_data = get_grouped_data(covid_data, 'country');
     covid_data = _(covid_data)
         .keyBy('code')
         .merge(_.keyBy(worldMapData.features, 'properties.iso_a3'))
